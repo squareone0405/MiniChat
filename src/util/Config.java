@@ -10,6 +10,7 @@ public class Config {
 	public final static String SendImagePath = "imgs/image.png";
 	public final static String SendFilePath = "imgs/file.png";
 	public final static String SendEmojiPath = "imgs/emoji.png";
+	public final static String SendAudioPath = "imgs/audio.png";
 	public final static String RefreshPath = "imgs/refresh.png";
 	public final static String LoginLogoPath = "imgs/login.png";
 	public final static String MiniChatLogoPath = "imgs/chat.png";

@@ -27,6 +27,10 @@ public class ContactLabel extends JLabel {
 			this.setText(id + "¡¾ÀëÏß¡¿");
 	}
 	
+	public String getId(){
+		return id;
+	}
+	
 	public boolean getOnline(){
 		return isOnline;
 	}

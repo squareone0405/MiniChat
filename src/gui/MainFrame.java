@@ -20,12 +20,12 @@ import database.*;
 import socket.*;
 
 public class MainFrame extends JFrame{	
-	private DefaultListModel<Pair<String, Boolean>> listModelContacts;
-	private JList listContacts;
+	private DefaultListModel<ContactLabel> listModelContacts;
+	private JList<ContactLabel> listContacts;
 	private JScrollPane spContacts;
 	
-	private DefaultListModel<Message> listModelMessage;
-	private JList listMessage;
+	private DefaultListModel<MessagePanel> listModelMessage;
+	private JList<MessagePanel> listMessage;
 	private JScrollPane spMessage;
 	
 	private JPanel chatPanel;
@@ -33,6 +33,7 @@ public class MainFrame extends JFrame{
 	private JButton btnSendImage;
 	private JButton btnSendEmoji;
 	private JButton btnSendFile;
+	private JButton btnSendAudio;
 	private JButton btnRefresh;
 	private JButton btnAddGroup;
 	private JTextArea areaMsg;
@@ -43,6 +44,7 @@ public class MainFrame extends JFrame{
 	private JButton btnAddFriend;
 	private JButton btnDeleteFriend;
 	private JButton btnClearHistory;
+	private JLabel lblCurrentChat;
 	
 	private DatabaseManager dbManager;
 	
@@ -82,14 +84,16 @@ public class MainFrame extends JFrame{
 		//for contacts
 		listModelContacts = new DefaultListModel();
 		for(int i = 0; i < 6; ++i){
-			listModelContacts.addElement(new Pair<String, Boolean>(Integer.toString(2016011503), true));
+			listModelContacts.addElement(new ContactLabel(new Pair<String, Boolean>(Integer.toString(2016011503), true)));
 		}
 		listContacts = new JList(listModelContacts);
 		listContacts.setCellRenderer(new ContactRenderer());
 		listContacts.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-            	Pair<String, Boolean> pair = (Pair<String, Boolean>) listContacts.getSelectedValue();
-            	System.out.println(pair.getKey());
+            	ContactLabel lbl = (ContactLabel) listContacts.getSelectedValue();
+            	System.out.println(lbl.getId());
+            	lbl.setOnline(false);
+            	lblCurrentChat.setText(lbl.getId());
             }
         });
 		listContacts.setFixedCellHeight(40);
@@ -101,18 +105,18 @@ public class MainFrame extends JFrame{
 		listModelMessage = new DefaultListModel();
 		for(int i = 0; i < 2; ++i){
 			if(i%2==0){
-				listModelMessage.addElement(new Message("2016011503", true, "2018:12:5", MessageType.Text, "ºÃµÄ"));
+				listModelMessage.addElement(new MessagePanel(new Message("2016011503", true, "2018:12:5", MessageType.Text, "ºÃµÄ")));
 			}
 			else
-				listModelMessage.addElement(new Message("2016011503", false, "2018:12:5", MessageType.Text, 
-						"¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ"));
+				listModelMessage.addElement(new MessagePanel(new Message("2016011503", false, "2018:12:5", MessageType.Text, 
+						"¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ¹þ")));
 		}
 		listMessage = new JList(listModelMessage);
 		listMessage.setCellRenderer(new MessageRenderer());
 		listMessage.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-            	Message msg = (Message) listMessage.getSelectedValue();
-            	System.out.println(msg.content);
+            	MessagePanel msgPnl = (MessagePanel) listMessage.getSelectedValue();
+            	System.out.println(msgPnl.toString());
             }
         });
 		spMessage = new JScrollPane();
@@ -123,6 +127,7 @@ public class MainFrame extends JFrame{
 		chatPanel = new JPanel();
 		btnSendImage = new JButton();
 		btnSendEmoji = new JButton();
+		btnSendAudio = new JButton();
 		btnSendFile = new JButton();
 		btnSendMsg = new JButton("·¢ËÍ");
 		
@@ -140,6 +145,11 @@ public class MainFrame extends JFrame{
 		Image tempSendEmoji = iconEmojiImage.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
 		btnSendEmoji.setIcon(new ImageIcon(tempSendEmoji));
 		btnSendEmoji.setOpaque(false);
+		
+		ImageIcon iconAudioImage = new ImageIcon(Config.SendAudioPath);
+		Image tempSendAudio = iconAudioImage.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+		btnSendAudio.setIcon(new ImageIcon(tempSendAudio));
+		btnSendAudio.setOpaque(false);
 		
 		areaMsg = new JTextArea();
 		areaMsg.setLineWrap(true);
@@ -168,6 +178,14 @@ public class MainFrame extends JFrame{
 					}
 				}
 				);
+		btnSendAudio.addActionListener(
+				new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						sendAudio();
+					}
+				}
+				);
 		btnSendMsg.addActionListener(
 				new ActionListener() {
 					@Override
@@ -179,6 +197,7 @@ public class MainFrame extends JFrame{
 		btnSendImage.setBounds(200, 450, 30, 30);
 		btnSendEmoji.setBounds(235, 450, 30, 30);
 		btnSendFile.setBounds(270, 450, 30, 30);
+		btnSendAudio.setBounds(305, 450, 30, 30);
 		btnSendMsg.setBounds(700, 580, 80, 30);
 		spMsg.setBounds(200, 480, 580, 100);
 		chatPanel.setBounds(200, 450, 600, 200);
@@ -186,6 +205,7 @@ public class MainFrame extends JFrame{
 		chatPanel.add(btnSendImage);
 		chatPanel.add(btnSendEmoji);
 		chatPanel.add(btnSendFile);
+		chatPanel.add(btnSendAudio);
 		chatPanel.add(btnSendMsg);
 		chatPanel.add(spMsg);
 		//chatPanel.setBackground(Color.GREEN);
@@ -202,6 +222,10 @@ public class MainFrame extends JFrame{
 		btnAddGroup = new JButton("Ìí¼ÓÈºÁÄ");
 		btnDeleteFriend = new JButton("É¾³ýºÃÓÑ");
 		btnClearHistory = new JButton("Çå¿ÕÁÄÌì¼ÇÂ¼");
+		lblCurrentChat = new JLabel();
+		lblCurrentChat.setFont(new Font("»ªÎÄËÎÌå", Font.BOLD, 22));
+		lblCurrentChat.setHorizontalAlignment(JLabel.RIGHT);
+		lblCurrentChat.setOpaque(true);
 		btnAddFriend.addActionListener(
 				new ActionListener() {
 					@Override
@@ -245,9 +269,10 @@ public class MainFrame extends JFrame{
 		textNewFriend.setBounds(10, 10, 110, 30);
 		btnAddFriend.setBounds(130, 10, 70, 30);
 		btnRefresh.setBounds(210, 10, 30, 30);
-		btnAddGroup.setBounds(300, 10, 80, 30);
-		btnDeleteFriend.setBounds(400, 10, 80, 30);
-		btnClearHistory.setBounds(500, 10, 100, 30);
+		btnAddGroup.setBounds(250, 10, 80, 30);
+		btnDeleteFriend.setBounds(350, 10, 80, 30);
+		btnClearHistory.setBounds(450, 10, 100, 30);
+		lblCurrentChat.setBounds(650, 10, 120, 30);
 		optionPanel.setBounds(0, 0, 790, 50);
 		optionPanel.setLayout(null);
 		optionPanel.add(textNewFriend);
@@ -256,6 +281,7 @@ public class MainFrame extends JFrame{
 		optionPanel.add(btnAddGroup);
 		optionPanel.add(btnDeleteFriend);
 		optionPanel.add(btnClearHistory);
+		optionPanel.add(lblCurrentChat);
 		//optionPanel.setBackground(Color.blue);
 			
 		//this.setLayout(null);
@@ -274,16 +300,17 @@ public class MainFrame extends JFrame{
 	
 	private void loadContacts(){
 		ArrayList<String> contacts = dbManager.getContactsList();
-		for(String tmp:contacts){
-            System.out.println(tmp);
-            listModelContacts.addElement(new Pair<String, Boolean>(tmp, true));
+		for(String cont:contacts){
+            System.out.println(cont);
+            listModelContacts.addElement(new ContactLabel(new Pair<String, Boolean>(cont, true)));
         }
 	}
 
 	private void sendMsg() { 
 		System.out.println("send msg");
 		System.out.println(areaMsg.getText());
-		listModelMessage.addElement(new Message("2016011503", true, "2018:12:5", MessageType.Text, areaMsg.getText()));
+		listModelMessage.addElement(new MessagePanel
+				(new Message("2016011503", true, "2018:12:5", MessageType.Text, areaMsg.getText())));
 		listMessage.ensureIndexIsVisible(listMessage.getModel().getSize() - 1);
 		areaMsg.setText(null);
 	}
@@ -300,6 +327,10 @@ public class MainFrame extends JFrame{
 		System.out.println("send emoji");
 	}
 	
+	private void sendAudio(){
+		System.out.println("send audio");
+	}
+	
 	private void addFriend(){
 		System.out.println("add friend");
 		String friendStr = textNewFriend.getText();
@@ -314,9 +345,7 @@ public class MainFrame extends JFrame{
 			return;
 		}
 		dbManager.addContactsItem(friendStr);
-		listModelContacts.addElement(new Pair<String, Boolean>(friendStr, true));
-		/*ContactLabel lbl = (ContactLabel)listContacts.getComponent(0);
-		lbl.setOnline(false);*/
+		listModelContacts.addElement(new ContactLabel(new Pair<String, Boolean>(friendStr, true)));
 		textNewFriend.setText("");
 	}
 	
