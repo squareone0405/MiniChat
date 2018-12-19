@@ -74,19 +74,32 @@ public class LoginFrame extends JFrame {
 	
 	private void login(){
 		System.out.println("login");
-		Client client = new Client();
+		/*Client client = new Client();
 		if(!client.connectServer(Config.serverAddr, Config.serverPort)){
 			JOptionPane.showMessageDialog(this, "连接中央服务器失败", "Error",  
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		if(!textPassword.getPassword().equals(Config.correctPassword)) {
+		if(!textPassword.getText().equals(Config.correctPassword)) {
 			JOptionPane.showMessageDialog(this, "密码错误", "Waring",  
 				JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 		client.sendMsg(textUsername.getText() + "_" + new String(textPassword.getPassword()));
-		MainFrame mf = new MainFrame();
+		System.out.println(textUsername.getText() + "_net2018");
+		client.sendMsg(textUsername.getText() + "_net2018");
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		client.sendMsg("logout2016011503");
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}*/
+		MainFrame mf = new MainFrame(textUsername.getText());
 		this.dispose();
 	}
 }

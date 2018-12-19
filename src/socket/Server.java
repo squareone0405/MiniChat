@@ -13,14 +13,17 @@ import java.util.Map.Entry;
 
 import javax.swing.JOptionPane;
 
+import gui.MainFrame;
 import util.*;
 
 public class Server {
 	private ServerSocket serverSocket;
 	private ServerThread serverThread;
 	private HashMap<Socket, ClientThread> clientTable;
+	private MainFrame mf;
 	
-	public Server(){
+	public Server(MainFrame mf){
+		this.mf = mf;
 		clientTable = new HashMap<Socket, ClientThread>();
 		buildServer();
 	}
@@ -103,11 +106,25 @@ public class Server {
 			}
 	    }
 	    public void run() {
-	    	String message = null;
+	    	String messageStr = null;
 	    	while(true) {
 	    		try {
-					message = reader.readLine();
-					System.out.println("client:" + message);
+	    			messageStr = reader.readLine();
+					if(messageStr == null) {
+						continue;
+					}
+					System.out.println(messageStr);
+					Message message = new Message();
+					String content = null;
+					if(messageStr.startsWith("TXT")){
+						content = messageStr.substring(3, messageStr.length());
+						message.sender = "todo";
+						message.isUser = false;
+						message.type = MessageType.Text;
+						message.time = "8102";
+						message.content = content;
+					}
+					mf.recieveMsg(message);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}      		

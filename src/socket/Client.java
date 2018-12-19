@@ -6,12 +6,25 @@ import java.net.*;
 
 import javax.swing.JOptionPane;
 
+import gui.MainFrame;
+import util.*;
+
 public class Client {
 	private Socket socket;
 	private PrintWriter writer;
 	private BufferedReader reader;
 	private MessageThread msgThread;
 	private boolean isConnected;
+	private MainFrame mf;
+	private String id;
+	
+	public Client(MainFrame mf, String id){
+		this.mf = mf;
+		this.id = id;
+	}
+	
+	public Client(){
+	}
 	
 	public boolean connectServer(String ip, int port){
 		if(isConnected) {
@@ -41,7 +54,7 @@ public class Client {
 	
 	public boolean sendMsg(String message) {  
 		if(isConnected){
-			writer.println(message);
+			writer.println(Config.TextHeader + message);
 			writer.flush();
 			return true;
 		}
@@ -71,4 +84,46 @@ public class Client {
 			return false;  
 		}  
 	}  
+	
+	class MessageThread extends Thread {
+		private BufferedReader msgReader;
+		public MessageThread(BufferedReader msgReader) {
+			this.msgReader = msgReader;
+		}
+		public void run() {
+			String messageStr = null;
+			while(true) {
+				try {
+					System.out.println("message thread running");
+					messageStr = msgReader.readLine();
+					System.out.println("read");
+					if(messageStr == null) {
+						System.out.println("continue");
+						continue;
+					}
+					System.out.println(messageStr);
+					Message message = new Message();
+					String content = null;
+					if(messageStr.startsWith("TXT")){
+						content = messageStr.substring(3, messageStr.length());
+						message.sender = id;
+						message.isUser = false;
+						message.type = MessageType.Text;
+						message.time = "8102";
+						message.content = content;
+					}
+					mf.recieveMsg(message);
+				} catch (IOException e) {
+					JOptionPane.showMessageDialog(null, "Á¬½Ó¶Ï¿ª", "Info",  
+							JOptionPane.INFORMATION_MESSAGE);
+					try {
+						msgReader.close();
+						return;
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		}
+	}
 }

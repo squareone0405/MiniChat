@@ -5,6 +5,9 @@ import java.util.ArrayList;
 
 import org.apache.derby.jdbc.EmbeddedDriver;
 
+import util.Message;
+import util.MessageType;
+
 public class DatabaseManager {
 	private Connection connContacts;
 	private String userName;
@@ -26,8 +29,11 @@ public class DatabaseManager {
 			}
 			rs = dbmd.getTables(null, "APP", "history".toUpperCase(), null);
 			if(!rs.next()){
-				String createContacts = "create table history (sender varchar(30) not null, "
-						+ "time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)";
+				String createContacts = "create table history (sender varchar(30) not null,"
+						+ "isUser int not null, "
+						+ "time varchar(32) not null, "
+						+ "messageType int not null, "
+						+ "content varchar(256) not null)";
 				Statement stmt = connContacts.createStatement();
 		        stmt.execute(createContacts);
 		        connContacts.commit();
@@ -76,5 +82,37 @@ public class DatabaseManager {
 			e.printStackTrace();
 		}
 		return contacts;
+	}
+	
+	public void addMessageItem(Message msg){
+		PreparedStatement pstmt;
+		try {
+			pstmt = connContacts.prepareStatement("insert into history values(?,?,?,?,?)");
+			pstmt.setString(1, msg.sender);
+			pstmt.setBoolean(2, msg.isUser);
+			pstmt.setString(3, msg.time);
+			pstmt.setInt(4, msg.type.getValue());
+			pstmt.setString(5, msg.content);
+	        pstmt.executeUpdate();
+	        connContacts.commit();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public ArrayList<Message> getMessageList(String id){
+		Statement stmt;
+		ArrayList<Message> history = new ArrayList<Message>();
+		try {
+			stmt = connContacts.createStatement();
+			ResultSet rs = stmt.executeQuery("select * from history where sender = '" + id + "'");
+	        while (rs.next()) {
+	        	history.add(new Message(rs.getString(1), rs.getBoolean(2), rs.getString(3), 
+	        			MessageType.values()[rs.getInt(4)], rs.getString(5)));
+	        }
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return history;
 	}
 }

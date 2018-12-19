@@ -6,6 +6,8 @@ public class Message {
 	public String time;
 	public MessageType type;
 	public String content;
+	public Message(){
+	}
 	public Message(String sender, boolean isUser, String time, MessageType type, String content){
 		this.sender = sender;
 		this.isUser = isUser;
