@@ -6,7 +6,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
-import socket.Client;
+import socket.CentralServerClient;
 import util.Config;
 
 public class LoginFrame extends JFrame {
@@ -16,9 +16,12 @@ public class LoginFrame extends JFrame {
 	private JPasswordField textPassword;
 	private JButton btnLogin;
 	private JPanel pnlMain;
+	private CentralServerClient client;
 	
 	public LoginFrame() {
 		super();
+		client = new CentralServerClient();
+		client.setLoginFrame(this);
 		this.setSize(400, 300);
 		this.setTitle("Login");		
 		initComponent();
@@ -74,32 +77,35 @@ public class LoginFrame extends JFrame {
 	
 	private void login(){
 		System.out.println("login");
-		/*Client client = new Client();
-		if(!client.connectServer(Config.serverAddr, Config.serverPort)){
-			JOptionPane.showMessageDialog(this, "连接中央服务器失败", "Error",  
-					JOptionPane.ERROR_MESSAGE);
-			return;
+		if(textUsername.getText().length() != 10){
+			JOptionPane.showMessageDialog(this, "请输入正确的学号", "Waring",  
+					JOptionPane.WARNING_MESSAGE);
+				return;
 		}
-		if(!textPassword.getText().equals(Config.correctPassword)) {
+		if(!textPassword.getText().equals(Config.CorrectPassword)) {
 			JOptionPane.showMessageDialog(this, "密码错误", "Waring",  
 				JOptionPane.WARNING_MESSAGE);
 			return;
 		}
-		client.sendMsg(textUsername.getText() + "_" + new String(textPassword.getPassword()));
-		System.out.println(textUsername.getText() + "_net2018");
-		client.sendMsg(textUsername.getText() + "_net2018");
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		if(!client.isConnected()){
+			if(!client.connectCentralServer()){
+				JOptionPane.showMessageDialog(this, "连接中央服务器失败", "Error",  
+						JOptionPane.ERROR_MESSAGE);
+				return;
+			}
 		}
-		client.sendMsg("logout2016011503");
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}*/
-		MainFrame mf = new MainFrame(textUsername.getText());
+		client.setUserNames(textUsername.getText());
+		client.sendLogin();
+	}
+	
+	public void loginConfirm(){
+		MainFrame mf = new MainFrame(textUsername.getText(), client);
+		client.setMainFrame(mf);
 		this.dispose();
+	}
+	
+	public void recieveIncorretLoginNo(){
+		JOptionPane.showMessageDialog(this, "请输入正确的学号", "Waring",  
+				JOptionPane.WARNING_MESSAGE);
 	}
 }

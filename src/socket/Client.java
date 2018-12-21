@@ -3,6 +3,9 @@ package socket;
 import java.io.*;
 
 import java.net.*;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.swing.JOptionPane;
 
@@ -18,12 +21,10 @@ public class Client {
 	private MainFrame mf;
 	private String id;
 	
-	public Client(MainFrame mf, String id){
+	public Client(MainFrame mf, String id, String ip){
 		this.mf = mf;
 		this.id = id;
-	}
-	
-	public Client(){
+		connectServer(ip, Config.LocalServerPort);
 	}
 	
 	public boolean connectServer(String ip, int port){
@@ -54,7 +55,8 @@ public class Client {
 	
 	public boolean sendMsg(String message) {  
 		if(isConnected){
-			writer.println(Config.TextHeader + message);
+			//writer.print(Config.TextHeader + message);
+			writer.print(message);
 			writer.flush();
 			return true;
 		}
@@ -94,25 +96,33 @@ public class Client {
 			String messageStr = null;
 			while(true) {
 				try {
-					System.out.println("message thread running");
-					messageStr = msgReader.readLine();
-					System.out.println("read");
-					if(messageStr == null) {
+					char[] buff = new char[1024];
+					int read;
+					StringBuilder response = new StringBuilder();
+					while((read = msgReader.read(buff)) != -1) {
+					    response.append(buff, 0, read);  
+					}
+					messageStr = response.toString();
+					if(messageStr == null || messageStr.equals(new String(""))) {
 						System.out.println("continue");
 						continue;
 					}
 					System.out.println(messageStr);
 					Message message = new Message();
 					String content = null;
-					if(messageStr.startsWith("TXT")){
-						content = messageStr.substring(3, messageStr.length());
-						message.sender = id;
+					if(messageStr.startsWith(Config.TextPrefix)){
+						content = messageStr.substring(4, messageStr.length());
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm::ss");
+						Calendar calendar = Calendar.getInstance();
+						Date date = calendar.getTime();
+						message.friendId = id;
 						message.isUser = false;
 						message.type = MessageType.Text;
-						message.time = "8102";
+						message.time = sdf.format(date);
 						message.content = content;
 					}
 					mf.recieveMsg(message);
+					messageStr = null;
 				} catch (IOException e) {
 					JOptionPane.showMessageDialog(null, "Á¬½Ó¶Ï¿ª", "Info",  
 							JOptionPane.INFORMATION_MESSAGE);

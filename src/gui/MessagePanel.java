@@ -13,7 +13,7 @@ import util.*;
 public class MessagePanel extends JPanel {
 	public MessagePanel(Message msg){
 		super();
-		JLabel sender = new JLabel(msg.sender + ":" + "(" + msg.time + ")");
+		JLabel sender = new JLabel(msg.friendId + ":" + "(" + msg.time + ")");
 		sender.setFont(new Font("times new roman", Font.PLAIN, 15));
 		sender.setBounds(0, 0, 560, 20);
 		JTextArea content = new JTextArea();

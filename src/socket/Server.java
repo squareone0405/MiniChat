@@ -29,15 +29,13 @@ public class Server {
 	}
 	
 	public void buildServer() {
-		int port = Config.localServerPort;
+		int port = Config.LocalServerPort;
 		try {
 			serverSocket = new ServerSocket(port);
 			serverThread = new ServerThread();
 			serverThread.start();
-			JOptionPane.showMessageDialog(null, "服务器创建成功", "Info",
-                    JOptionPane.INFORMATION_MESSAGE); 
         } catch (BindException e) {
-            JOptionPane.showMessageDialog(null, "端口号已被占用，请换一个！", "Error",
+            JOptionPane.showMessageDialog(null, "端口号9876已被占用", "Error",
                     JOptionPane.ERROR_MESSAGE); 
         } catch (Exception e1) {  
             e1.printStackTrace(); 
@@ -113,15 +111,26 @@ public class Server {
 					if(messageStr == null) {
 						continue;
 					}
+					char[] buff = new char[1024];
+					int read;
+					StringBuilder response= new StringBuilder();
+					while((read = reader.read(buff)) != -1) {
+					    response.append(buff, 0, read );  
+					}
+					messageStr = response.toString();
+					if(messageStr == null) {
+						System.out.println("continue");
+						continue;
+					}
 					System.out.println(messageStr);
 					Message message = new Message();
 					String content = null;
-					if(messageStr.startsWith("TXT")){
-						content = messageStr.substring(3, messageStr.length());
-						message.sender = "todo";
+					if(messageStr.startsWith(Config.TextPrefix)){
+						content = messageStr.substring(4, messageStr.length());
+						message.friendId = "unknown";
 						message.isUser = false;
 						message.type = MessageType.Text;
-						message.time = "8102";
+						message.time = Tools.getCurentTime();
 						message.content = content;
 					}
 					mf.recieveMsg(message);

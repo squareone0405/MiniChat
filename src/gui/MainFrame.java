@@ -13,8 +13,9 @@ import java.io.File;
 import javax.swing.*;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Map;
 
 import javafx.util.Pair;
 
@@ -23,13 +24,12 @@ import database.*;
 import socket.*;
 
 public class MainFrame extends JFrame{	
-	private DefaultListModel<ContactLabel> contactsModel;
-	private JList<ContactLabel> listContacts;
+	private DefaultListModel<ContactLabel> contactModel;
+	private JList<ContactLabel> contactList;
 	private JScrollPane spContacts;
 	
-	private DefaultListModel<MessagePanel> messageModel;
 	private HashMap<String, DefaultListModel<MessagePanel>> messageModelList;
-	private JList<MessagePanel> listMessage;
+	private JList<MessagePanel> messageList;
 	private JScrollPane spMessage;
 	
 	private JPanel chatPanel;
@@ -50,27 +50,36 @@ public class MainFrame extends JFrame{
 	private JButton btnClearHistory;
 	private JLabel lblCurrentChat;
 	
+	private DatabaseManager dbManager;
+	
 	private String currentFriend;
 	private ArrayList<String> friendList;
 	private String userName;
-	
-	private DatabaseManager dbManager;
+	private HashMap<String, String> ipTable;
+	private ArrayList<String> idToBeCheck;
 	
 	private Server server;
-	private Client client;
+	private CentralServerClient csClient;
+	private HashMap<String, Client> clientTable;
+	private boolean isResponsed;
 	
-	public MainFrame(String userName) {
+	public MainFrame(String userName, CentralServerClient csClient) {
 		super("MiniChat");
 		this.userName = userName;
+		this.csClient = csClient;
 		dbManager = new DatabaseManager(userName);
 		initComponent();
 		this.setSize(790, 650);
 		this.setVisible(true);
 		this.setResizable(false);
 		this.setLocationRelativeTo(null); 
-		loadContacts();
-		if(!userName.equals(new String("0000")))
-			server = new Server(this);
+		server = new Server(this);
+		friendList = new ArrayList<String>();
+		ipTable = new HashMap<String, String>();
+		clientTable = new HashMap<String, Client>();
+		messageModelList = new HashMap<String, DefaultListModel<MessagePanel>>();
+		isResponsed = true;
+		loadAllFormDB();
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -93,44 +102,32 @@ public class MainFrame extends JFrame{
 		this.setIconImage(icon.getImage());
 		
 		//for contacts
-		contactsModel = new DefaultListModel();
-		/*for(int i = 0; i < 6; ++i){
-			listModelContacts.addElement(new ContactLabel(new Pair<String, Boolean>(Integer.toString(2016011503), true)));
-		}*/
-		listContacts = new JList(contactsModel);
-		listContacts.setCellRenderer(new ContactRenderer());
-		listContacts.addListSelectionListener(e -> {
+		contactModel = new DefaultListModel();
+		contactList = new JList(contactModel);
+		contactList.setCellRenderer(new ContactRenderer());
+		contactList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-            	ContactLabel lbl = (ContactLabel) listContacts.getSelectedValue();
+            	ContactLabel lbl = (ContactLabel) contactList.getSelectedValue();
             	contactItemClicked(lbl);	
             }
         });
-		listContacts.setFixedCellHeight(40);
+		contactList.setFixedCellHeight(40);
 		spContacts = new JScrollPane();
-		spContacts.getViewport().add(listContacts);
+		spContacts.getViewport().add(contactList);
 		spContacts.setBounds(0, 50, 200, 530);
 		
 		//for messages
-		messageModel = new DefaultListModel();
-		/*for(int i = 0; i < 2; ++i){
-			if(i%2==0){
-				listModelMessage.addElement(new MessagePanel(new Message("2016011503", true, "2018:12:5", MessageType.Text, "好的")));
-			}
-			else
-				listModelMessage.addElement(new MessagePanel(new Message("2016011503", false, "2018:12:5", MessageType.Text, 
-						"哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈")));
-		}*/
-		listMessage = new JList(messageModel);
-		listMessage.setCellRenderer(new MessageRenderer());
-		listMessage.addListSelectionListener(e -> {
+		messageList = new JList();
+		messageList.setCellRenderer(new MessageRenderer());
+		messageList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-            	MessagePanel msgPnl = (MessagePanel) listMessage.getSelectedValue();
+            	MessagePanel msgPnl = (MessagePanel) messageList.getSelectedValue();
             	if(msgPnl != null)
             		messageItemClicked(msgPnl);
             }
         });
 		spMessage = new JScrollPane();
-		spMessage.getViewport().add(listMessage);		
+		spMessage.getViewport().add(messageList);		
 		spMessage.setBounds(200, 50, 580, 400);
 		
 		//for the chatpanel
@@ -218,7 +215,6 @@ public class MainFrame extends JFrame{
 		chatPanel.add(btnSendAudio);
 		chatPanel.add(btnSendMsg);
 		chatPanel.add(spMsg);
-		//chatPanel.setBackground(Color.GREEN);
 		
 		//for optionpanel
 		optionPanel = new JPanel();
@@ -292,9 +288,7 @@ public class MainFrame extends JFrame{
 		optionPanel.add(btnDeleteFriend);
 		optionPanel.add(btnClearHistory);
 		optionPanel.add(lblCurrentChat);
-		//optionPanel.setBackground(Color.blue);
-			
-		//this.setLayout(null);
+
 		this.add(spContacts);
 		this.add(spMessage);	
 		this.add(optionPanel);
@@ -308,23 +302,63 @@ public class MainFrame extends JFrame{
 		});
 	}
 	
+	private void loadAllFormDB(){
+		loadContacts();
+		updateOnline();
+		loadHistory();
+		if(friendList.size() > 0){
+			contactItemClicked(contactModel.getElementAt(0));
+		}
+	}
+	
 	private void loadContacts(){
-		ArrayList<String> contacts = dbManager.getContactsList();
-		for(String cont:contacts){
-            System.out.println(cont);
-            contactsModel.addElement(new ContactLabel(new Pair<String, Boolean>(cont, true)));
+		friendList = dbManager.getContactsList();
+		for(String friend:friendList){
+            System.out.println(friend);
+            contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(friend, false)));
         }
+	}
+	
+	private void loadHistory(){
+		for(String friend:friendList){
+			DefaultListModel<MessagePanel> model = new DefaultListModel<MessagePanel>();
+			ArrayList<Message> msgList = dbManager.getMessageList(friend);
+			for(Message msg:msgList){
+				model.addElement(new MessagePanel(msg));
+			}
+			messageModelList.put(friend, model);
+        }
+	}
+	
+	private void updateOnline(){
+		idToBeCheck = new ArrayList<String>();
+		for(String id:friendList){
+			idToBeCheck.add(id);
+		}
+		if(idToBeCheck.size() > 0)
+			csClient.checkOnline(idToBeCheck.get(0));
+		System.out.println("todo"+idToBeCheck);
 	}
 
 	private void sendMsg() { 
 		System.out.println("send msg");
-		System.out.println(areaMsg.getText());
-		messageModel.addElement(new MessagePanel
-				(new Message(userName, true, "2018:12:5", MessageType.Text, areaMsg.getText())));
-		listMessage.ensureIndexIsVisible(listMessage.getModel().getSize() - 1);
-		dbManager.addMessageItem(new Message(currentFriend, true, "2018:12:5", MessageType.Text, areaMsg.getText()));
-		if(userName.equals(new String("0000")))
-			client.sendMsg(areaMsg.getText());
+		if(!ipTable.containsKey(currentFriend) || ipTable.get(currentFriend).equals(new String(""))) {
+			JOptionPane.showMessageDialog(this, "该好友不在线，无法发送消息", "Waring", 
+					JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+		String message = areaMsg.getText();
+		messageModelList.get(currentFriend).addElement(new MessagePanel
+				(new Message(userName, true, Tools.getCurentTime(), MessageType.Text, message)));
+		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
+		dbManager.addMessageItem(new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Text, message));
+		if(clientTable.containsKey(currentFriend)){
+			clientTable.get(currentFriend).sendMsg(message);
+		}
+		else {
+			clientTable.put(currentFriend, new Client(this, currentFriend, ipTable.get(currentFriend)));
+			clientTable.get(currentFriend).sendMsg(message);
+		}
 		areaMsg.setText("");
 	}
 	
@@ -350,28 +384,25 @@ public class MainFrame extends JFrame{
 	private void addFriend(){
 		System.out.println("add friend");
 		String friendStr = textNewFriend.getText();
-		if(friendStr.equals("")){
+		if(friendStr.length() != 10){
 			JOptionPane.showMessageDialog(this, "请输入好友学号", "Waring", 
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
-		if(friendStr.length() >= 20){
-			JOptionPane.showMessageDialog(this, "输入内容过长", "Waring", 
+		if(friendStr.equals(userName)){
+			JOptionPane.showMessageDialog(this, "查询学号为本机", "Waring", 
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
-		dbManager.addContactsItem(friendStr);
-		contactsModel.addElement(new ContactLabel(new Pair<String, Boolean>(friendStr, true)));
+		if(isResponsed == true)
+			csClient.checkOnline(friendStr);
+		isResponsed = false;
 		textNewFriend.setText("");
-		
-		if(userName.equals(new String("0000"))){
-			client = new Client(this, "2016011503");
-			client.connectServer(new String("127.0.0.1"), 9876);
-		}
 	}
 	
 	private void refresh(){
 		System.out.println("refresh");
+		updateOnline();
 	}
 	
 	private void addGroup(){
@@ -387,23 +418,23 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void shutDown(){
+		if(csClient!=null)
+			csClient.sendLogout();
 		if(server!=null)
 			server.closeServer();
-		if(client!=null)
-			client.disConnect();
+		if(clientTable!=null)
+			for (Map.Entry<String, Client> entry : clientTable.entrySet()){
+			    entry.getValue().disConnect();
+			}
 		dbManager.shutDown();
 	}
 	
 	private void contactItemClicked(ContactLabel contactLabel){
-		System.out.println(contactLabel.getId());
-		currentFriend = contactLabel.getId();
+		String id = contactLabel.getId();
+		System.out.println(id);
+		currentFriend = id;
     	lblCurrentChat.setText(currentFriend);
-    	ArrayList<Message> msgList = dbManager.getMessageList(currentFriend);
-    	messageModel.clear();
-    	Iterator<Message> it = msgList.iterator();
-	    while (it.hasNext()) {
-	    	messageModel.addElement(new MessagePanel(it.next()));
-	    }
+    	messageList.setModel(messageModelList.get(id));
 	}
 	
 	private void messageItemClicked(MessagePanel msgPanel){
@@ -411,6 +442,41 @@ public class MainFrame extends JFrame{
 	}
 	
 	public void recieveMsg(Message msg){
-		messageModel.addElement(new MessagePanel(msg));
+		messageModelList.get(msg.friendId).addElement(new MessagePanel(msg));
+	}
+	
+	public void recieveOnlineResponse(String id, String ip){
+		ipTable.put(id, ip);
+		boolean isOnline = true;
+		if(ip.equals(new String("")))
+			isOnline = false;
+		if(!friendList.contains(id)){
+			contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(id, isOnline)));
+			dbManager.addContactsItem(id);
+			friendList.add(id);
+		}
+		else {
+			Enumeration<ContactLabel> enu = contactModel.elements();
+			while (enu.hasMoreElements()) {
+				ContactLabel label = enu.nextElement();
+				if(label.getId().equals(id)){
+					label.setOnline(isOnline);
+					this.repaint();
+				}		
+		    }
+		}
+		if(idToBeCheck.contains(id)){
+			idToBeCheck.remove(id);
+		}
+		isResponsed = true;
+		if(idToBeCheck.size()>0){
+			csClient.checkOnline(idToBeCheck.get(0));
+			isResponsed = false;
+		}
+	}
+	
+	public void recieveIncorretNo(){
+		JOptionPane.showMessageDialog(this, "请输入正确的学号", "Waring", 
+				JOptionPane.WARNING_MESSAGE);
 	}
 }
