@@ -295,10 +295,10 @@ public class MainFrame extends JFrame{
 		optionPanel.add(btnClearHistory);
 		optionPanel.add(lblCurrentChat);
 
-		this.add(spContacts);
-		this.add(spMessage);	
-		this.add(optionPanel);
-		this.add(chatPanel);
+		this.getContentPane().add(spContacts);
+		this.getContentPane().add(spMessage);	
+		this.getContentPane().add(optionPanel);
+		this.getContentPane().add(chatPanel);
 		
 		this.addWindowListener(new WindowAdapter() {  
 			public void windowClosing(WindowEvent e) {  
@@ -320,7 +320,6 @@ public class MainFrame extends JFrame{
 	private void loadContacts(){
 		friendList = dbManager.getContactsList();
 		for(String friend:friendList){
-            System.out.println(friend);
             contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(friend, false)));
         }
 	}
@@ -343,42 +342,50 @@ public class MainFrame extends JFrame{
 		}
 		if(idToBeCheck.size() > 0)
 			csClient.checkOnline(idToBeCheck.get(0));
-		System.out.println("todo"+idToBeCheck);
 	}
 
-	private void sendMsg() { 
-		System.out.println("send msg");
-		if(!ipTable.containsKey(currentFriend) || ipTable.get(currentFriend).equals(new String(""))) {
-			JOptionPane.showMessageDialog(this, "该好友不在线，无法发送消息", "Waring", 
-					JOptionPane.WARNING_MESSAGE);
+	private void sendMsg() {
+		if(!checkBeforeSend())
 			return;
-		}
-		String message = areaMsg.getText();
-		messageModelList.get(currentFriend).addElement(new MessagePanel
-				(new Message(userName, true, Tools.getCurentTime(), MessageType.Text, message)));
+		String content = areaMsg.getText();
+		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Text, content);
+		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
-		dbManager.addMessageItem(new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Text, message));
+		dbManager.addMessageItem(message);
 		if(clientTable.containsKey(currentFriend)){
-			clientTable.get(currentFriend).sendMsg(message);
+			clientTable.get(currentFriend).sendMsg(content);
 		}
 		else {
 			clientTable.put(currentFriend, new Client(userName, ipTable.get(currentFriend)));
-			clientTable.get(currentFriend).sendMsg(message);
+			clientTable.get(currentFriend).sendMsg(content);
 		}
 		areaMsg.setText("");
 	}
 	
 	private void sendFile(){
-		System.out.println("send file");
+		if(!checkBeforeSend())
+			return;
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.showOpenDialog(this);
 		File file = fileChooser.getSelectedFile();
-		if(file != null)
-			System.out.println(file.length());
+		if(file == null || file.length() == 0)
+			return;
+		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.File, file.getName());
+		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
+		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
+		dbManager.addMessageItem(message);
+		if(clientTable.containsKey(currentFriend)){
+			clientTable.get(currentFriend).sendFile(file);
+		}
+		else {
+			clientTable.put(currentFriend, new Client(userName, ipTable.get(currentFriend)));
+			clientTable.get(currentFriend).sendFile(file);
+		}		
 	}
 	
 	private void sendImage(){
-		System.out.println("send image");
+		if(!checkBeforeSend())
+			return;
 		JFileChooser fileChooser = new JFileChooser();
 		FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
 			    "Image files", ImageIO.getReaderFileSuffixes());
@@ -386,17 +393,40 @@ public class MainFrame extends JFrame{
 		fileChooser.setAcceptAllFileFilterUsed(false);
 		fileChooser.showOpenDialog(this);
 		File file = fileChooser.getSelectedFile();
-		if(file != null && file.length() != 0)
-			System.out.println(file.length());
+		if(file == null || file.length() == 0)
+			return;
+		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Image, file.getName());
+		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
+		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
+		dbManager.addMessageItem(message);
+		if(clientTable.containsKey(currentFriend)){
+			clientTable.get(currentFriend).sendImage(file);
+		}
+		else {
+			clientTable.put(currentFriend, new Client(userName, ipTable.get(currentFriend)));
+			clientTable.get(currentFriend).sendImage(file);
+		}		
 	}
 	
 	private void sendEmoji(){
-		System.out.println("send emoji");
+		if(!checkBeforeSend())
+			return;
 	}
 	
 	private void sendAudio(){
-		System.out.println("send audio");
+		if(!checkBeforeSend())
+			return;
 	}
+	
+	private boolean checkBeforeSend(){
+		if(!ipTable.containsKey(currentFriend) || ipTable.get(currentFriend).equals(new String(""))) {
+			JOptionPane.showMessageDialog(this, "该好友不在线，无法发送消息", "Waring", 
+					JOptionPane.WARNING_MESSAGE);
+			return false;
+		}
+		return true;
+	}
+	
 	private void addFriend(){
 		System.out.println("add friend");
 		String friendStr = textNewFriend.getText();
@@ -472,6 +502,7 @@ public class MainFrame extends JFrame{
 	    	Entry<String, DefaultListModel<MessagePanel>> pair = (Entry<String, DefaultListModel<MessagePanel>>)it.next();
 	    	System.out.println(pair.getKey());
 	    }*/
+		dbManager.addMessageItem(msg);
 		messageModelList.get(id).addElement(new MessagePanel(msg));
 		messageList.setModel(messageModelList.get(id));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);

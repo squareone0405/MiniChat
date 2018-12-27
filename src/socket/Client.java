@@ -14,7 +14,6 @@ import util.*;
 
 public class Client {
 	private Socket socket;
-	private PrintWriter writer;
 	DataOutputStream dos;
 	private boolean isConnected;
 	private String id;
@@ -40,11 +39,6 @@ public class Client {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		/*try {
-			writer = new PrintWriter(socket.getOutputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
 		return true;
 	}
 	
@@ -59,15 +53,6 @@ public class Client {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			/*char[] charArray = message.toCharArray();
-			String lengthStr = String.valueOf(charArray.length);
-			while(lengthStr.length() < 4)
-				lengthStr = "0" + lengthStr;
-			writer.write(id);
-			writer.write(Config.TextPrefix);
-			writer.write(lengthStr);
-			writer.write(charArray, 0, charArray.length);
-			writer.flush();*/
 			return true;
 		}
 		else
@@ -79,28 +64,57 @@ public class Client {
 			FileInputStream fis = null;
 			try {
 				fis = new FileInputStream(file);
-			} catch (FileNotFoundException e2) {
-				e2.printStackTrace();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
 			}
 	        BufferedInputStream bis = new BufferedInputStream(fis);
 	        byte[] byteArray = new byte[(int) file.length()];
 	        try {
 				bis.read(byteArray, 0, byteArray.length);
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			String lengthStr = String.valueOf(byteArray.length);
-			while(lengthStr.length() < 4)
-				lengthStr = "0" + lengthStr;
-			writer.write(id);
-			writer.write(Config.TextPrefix);
-			writer.write(lengthStr);
-			try {
-				socket.getOutputStream().write(byteArray);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			writer.flush();
+			try {
+				dos.writeUTF(id);
+				dos.writeUTF(Config.ImagePrefix);
+				dos.writeInt((int) file.length());
+				dos.writeUTF(file.getName());
+				dos.write(byteArray);
+				dos.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return true;
+		}
+		else
+			return false;
+	}
+	
+	public boolean sendFile(File file) {  
+		if(isConnected){
+			FileInputStream fis = null;
+			try {
+				fis = new FileInputStream(file);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+	        BufferedInputStream bis = new BufferedInputStream(fis);
+	        byte[] byteArray = new byte[(int) file.length()];
+	        try {
+				bis.read(byteArray, 0, byteArray.length);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			try {
+				dos.writeUTF(id);
+				dos.writeUTF(Config.FilePrefix);
+				dos.writeInt((int) file.length());
+				dos.writeUTF(file.getName());
+				dos.write(byteArray);
+				dos.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			return true;
 		}
 		else
@@ -108,10 +122,7 @@ public class Client {
 	}
 
 	public boolean disConnect() {
-		try {  
-			if (writer != null) {  
-				writer.close();  
-			}
+		try {
 			if (socket != null) {  
 				socket.close();  
 			}  

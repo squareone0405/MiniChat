@@ -17,23 +17,53 @@ public class MessagePanel extends JPanel {
 		sender.setFont(new Font("times new roman", Font.PLAIN, 15));
 		sender.setBounds(0, 0, 560, 20);
 		JTextArea content = new JTextArea();
-		content.setBounds(0, 20, 300, 20);
-		content.setText(msg.content);
-		content.setWrapStyleWord(true);
-		content.setLineWrap(true);
-		content.setOpaque(true);
-		content.setEditable(false);
-		content.setFocusable(false);
-		content.setBackground(new Color(220, 220, 220));
-		content.setFont(new Font("华文宋体", Font.PLAIN, 20));
-	    content.setSize(content.getPreferredSize());
+		switch(msg.type){
+		case Text:
+			content.setBounds(0, 20, 300, 20);
+			content.setText(msg.content);
+			content.setWrapStyleWord(true);
+			content.setLineWrap(true);
+			content.setOpaque(true);
+			content.setEditable(false);
+			content.setFocusable(false);
+			content.setBackground(new Color(220, 220, 220));
+			content.setFont(new Font("华文宋体", Font.PLAIN, 20));
+		    content.setSize(content.getPreferredSize());
+		    this.add(content);
+		    break;
+		case File:
+			content.setBounds(0, 20, 300, 20);
+			content.setText(msg.content);
+			content.setWrapStyleWord(true);
+			content.setLineWrap(true);
+			content.setOpaque(true);
+			content.setEditable(false);
+			content.setFocusable(false);
+			content.setBackground(new Color(220, 220, 220));
+			content.setFont(new Font("华文宋体", Font.PLAIN, 20));
+		    content.setSize(content.getPreferredSize());
+		    this.add(content);
+		    break;
+		default:
+			content.setBounds(0, 20, 300, 20);
+			content.setText(msg.content);
+			content.setWrapStyleWord(true);
+			content.setLineWrap(true);
+			content.setOpaque(true);
+			content.setEditable(false);
+			content.setFocusable(false);
+			content.setBackground(new Color(220, 220, 220));
+			content.setFont(new Font("华文宋体", Font.PLAIN, 20));
+		    content.setSize(content.getPreferredSize());
+		    this.add(content);
+		    break;
+		}	
 		this.setLayout(null);
 		this.setPreferredSize(new Dimension(560,content.getHeight() + 30));
 		if(msg.isUser){
 			sender.setHorizontalAlignment(JLabel.RIGHT);
 			content.setLocation(260, 20);
 		}
-		this.add(content);
 		this.add(sender);
 	}
 }

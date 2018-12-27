@@ -1,10 +1,10 @@
 package socket;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -107,41 +107,52 @@ public class Server {
 	    			id = dis.readUTF();
 	    			type = dis.readUTF();
 	    			length = dis.readInt();
-	    			Message message = new Message();
+	    			System.out.println("type"+type);
+	    			Message message = new Message(id, false, Tools.getCurentTime(), MessageType.Text, null);
 					if(type.equals(Config.TextPrefix)){
 						String content = dis.readUTF();
-						message.friendId = id;
-						message.isUser = false;
 						message.type = MessageType.Text;
-						message.time = Tools.getCurentTime();
 						message.content = content;
 					}
+					else if(type.equals(Config.ImagePrefix)){
+						System.out.println("image**************");
+						String fileName = dis.readUTF();    
+						byte[] fileBuffer = new byte[length];
+						File dir = new File(Config.ChatFilePath);
+					    if (!dir.exists())
+					    	dir.mkdir();
+						FileOutputStream output = new FileOutputStream(new File(dir, fileName));
+				        int size = length;
+				        int bytesRead;
+				        while (size > 0 && (bytesRead = dis.read(fileBuffer, 0, (int)Math.min(fileBuffer.length, size))) != -1){
+						    output.write(fileBuffer, 0, bytesRead);
+						    size -= bytesRead;
+						    System.out.println(bytesRead);
+						}
+				        output.close();
+						message.type = MessageType.Image;
+						message.content = fileName;
+					}
+					else if(type.equals(Config.FilePrefix)){
+						System.out.println("file**************");
+						String fileName = dis.readUTF();		    
+						byte[] fileBuffer = new byte[length];
+						File dir = new File(Config.ChatFilePath);
+					    if (!dir.exists())
+					    	dir.mkdir();
+						FileOutputStream output = new FileOutputStream(new File(dir, fileName));
+				        int size = length;
+				        int bytesRead;
+				        while (size > 0 && (bytesRead = dis.read(fileBuffer, 0, (int)Math.min(fileBuffer.length, size))) != -1){
+						    output.write(fileBuffer, 0, bytesRead);
+						    size -= bytesRead;
+						    System.out.println(bytesRead);
+						}
+				        output.close();
+						message.type = MessageType.File;
+						message.content = fileName;
+					}
 					mf.recieveMsg(message);
-					/*while(true){
-						length = reader.read(prefix, 0, 18);
-						if(length > 0)
-							break;
-					}
-					str = String.valueOf(prefix);
-					if(str == null || str.equals(new String(""))) {
-						continue;
-					}
-					System.out.println(str);
-					String id = str.substring(0, 10);
-					String typeStr = str.substring(10, 14);
-					String lengthStr = str.substring(14, 18);
-					int msgLength = Integer.parseInt(lengthStr);
-					char[] content = new char[msgLength];
-					reader.read(content, 0, msgLength);
-					Message message = new Message();	
-					if(typeStr.equals(Config.TextPrefix)){
-						message.friendId = id;
-						message.isUser = false;
-						message.type = MessageType.Text;
-						message.time = Tools.getCurentTime();
-						message.content = String.valueOf(content);
-					}
-					mf.recieveMsg(message);*/
 				} catch (IOException e) {
 					//JOptionPane.showMessageDialog(null, "Á¬½Ó¶Ï¿ª", "Info", JOptionPane.INFORMATION_MESSAGE);
 					try {

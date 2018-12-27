@@ -31,7 +31,7 @@ public class CentralServerClient {
 	public boolean connectCentralServer(){
 		try {
 			socket = new Socket();   
-			socket.connect(new InetSocketAddress(Config.ServerAddr, Config.ServerPort), Config.TimeoutMs); 
+			socket.connect(new InetSocketAddress(Config.CentralServerAddr, Config.CentralServerPort), Config.TimeoutMs); 
 		} catch (IOException e) {
 			e.printStackTrace();
 			return false;

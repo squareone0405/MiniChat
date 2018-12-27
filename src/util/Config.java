@@ -1,8 +1,8 @@
 package util;
 
 public class Config {
-	public final static String ServerAddr = "166.111.140.14";
-	public final static int ServerPort = 8000;
+	public final static String CentralServerAddr = "166.111.140.14";
+	public final static int CentralServerPort = 8000;
 	public final static int LocalServerPort = 9876;
 	
 	public final static String CorrectPassword = "net2018";
@@ -28,6 +28,8 @@ public class Config {
 	public final static String RefreshPath = "imgs/refresh.png";
 	public final static String LoginLogoPath = "imgs/login.png";
 	public final static String MiniChatLogoPath = "imgs/chat.png";
+	
+	public final static String ChatFilePath = "chatfile";
 	
 	public final static int TimeoutMs = 2000;
 }
