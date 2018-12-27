@@ -31,7 +31,8 @@ public class Client {
 			socket = new Socket(ip, port);
 			isConnected = true;
 		} catch (IOException e) {
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "无法连接该好友！", "Warning",
+                    JOptionPane.WARNING_MESSAGE);
 			return false;
 		}
 		try {

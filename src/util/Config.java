@@ -28,8 +28,10 @@ public class Config {
 	public final static String RefreshPath = "imgs/refresh.png";
 	public final static String LoginLogoPath = "imgs/login.png";
 	public final static String MiniChatLogoPath = "imgs/chat.png";
+	public final static String FileCorruptPath = "imgs/corrupt.png";
+	public final static String File4ChatPath = "imgs/file2.png";
 	
-	public final static String ChatFilePath = "chatfile";
+	public final static String ChatFilePath = "chatfile/";
 	
 	public final static int TimeoutMs = 2000;
 }

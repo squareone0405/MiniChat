@@ -395,7 +395,7 @@ public class MainFrame extends JFrame{
 		File file = fileChooser.getSelectedFile();
 		if(file == null || file.length() == 0)
 			return;
-		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Image, file.getName());
+		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Image, file.getAbsolutePath());
 		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
 		dbManager.addMessageItem(message);
@@ -515,6 +515,7 @@ public class MainFrame extends JFrame{
 			isOnline = false;
 		if(!friendList.contains(id)){
 			contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(id, isOnline)));
+			messageModelList.put(id, new DefaultListModel<MessagePanel>());
 			dbManager.addContactsItem(id);
 			friendList.add(id);
 		}
