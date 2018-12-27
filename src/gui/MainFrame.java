@@ -9,13 +9,19 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.FileFilter;
+import java.net.Socket;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javafx.util.Pair;
 
@@ -356,7 +362,7 @@ public class MainFrame extends JFrame{
 			clientTable.get(currentFriend).sendMsg(message);
 		}
 		else {
-			clientTable.put(currentFriend, new Client(this, currentFriend, ipTable.get(currentFriend)));
+			clientTable.put(currentFriend, new Client(userName, ipTable.get(currentFriend)));
 			clientTable.get(currentFriend).sendMsg(message);
 		}
 		areaMsg.setText("");
@@ -367,11 +373,21 @@ public class MainFrame extends JFrame{
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.showOpenDialog(this);
 		File file = fileChooser.getSelectedFile();
-		System.out.println(file.getName());
+		if(file != null)
+			System.out.println(file.length());
 	}
 	
 	private void sendImage(){
 		System.out.println("send image");
+		JFileChooser fileChooser = new JFileChooser();
+		FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
+			    "Image files", ImageIO.getReaderFileSuffixes());
+		fileChooser.setFileFilter(imageFilter);
+		fileChooser.setAcceptAllFileFilterUsed(false);
+		fileChooser.showOpenDialog(this);
+		File file = fileChooser.getSelectedFile();
+		if(file != null && file.length() != 0)
+			System.out.println(file.length());
 	}
 	
 	private void sendEmoji(){
@@ -431,18 +447,34 @@ public class MainFrame extends JFrame{
 	
 	private void contactItemClicked(ContactLabel contactLabel){
 		String id = contactLabel.getId();
-		System.out.println(id);
-		currentFriend = id;
-    	lblCurrentChat.setText(currentFriend);
-    	messageList.setModel(messageModelList.get(id));
+		setCurrnetFriend(id);
 	}
 	
 	private void messageItemClicked(MessagePanel msgPanel){
 		System.out.println(msgPanel.toString());
 	}
 	
+	private void setCurrnetFriend(String id){
+		currentFriend = id;
+    	lblCurrentChat.setText(currentFriend);
+    	messageList.setModel(messageModelList.get(id));
+    	messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
+	}
+	
 	public void recieveMsg(Message msg){
-		messageModelList.get(msg.friendId).addElement(new MessagePanel(msg));
+		String id = msg.friendId;
+		if(!messageModelList.containsKey(id)){
+			messageModelList.put(id, new DefaultListModel<MessagePanel>());
+			this.contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(id, true)));
+		}
+		/*Iterator<Entry<String, DefaultListModel<MessagePanel>>> it = messageModelList.entrySet().iterator();
+	    while (it.hasNext()) {
+	    	Entry<String, DefaultListModel<MessagePanel>> pair = (Entry<String, DefaultListModel<MessagePanel>>)it.next();
+	    	System.out.println(pair.getKey());
+	    }*/
+		messageModelList.get(id).addElement(new MessagePanel(msg));
+		messageList.setModel(messageModelList.get(id));
+		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
 	}
 	
 	public void recieveOnlineResponse(String id, String ip){

@@ -15,14 +15,11 @@ import util.*;
 public class Client {
 	private Socket socket;
 	private PrintWriter writer;
-	private BufferedReader reader;
-	private MessageThread msgThread;
+	DataOutputStream dos;
 	private boolean isConnected;
-	private MainFrame mf;
 	private String id;
 	
-	public Client(MainFrame mf, String id, String ip){
-		this.mf = mf;
+	public Client(String id, String ip){
 		this.id = id;
 		connectServer(ip, Config.LocalServerPort);
 	}
@@ -39,24 +36,70 @@ public class Client {
 			return false;
 		}
 		try {
-			writer = new PrintWriter(socket.getOutputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}  
-		try {
-			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			dos = new DataOutputStream(socket.getOutputStream());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		msgThread = new MessageThread(reader);
-		msgThread.start();  
+		/*try {
+			writer = new PrintWriter(socket.getOutputStream());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}*/
 		return true;
 	}
 	
 	public boolean sendMsg(String message) {  
 		if(isConnected){
-			//writer.print(Config.TextHeader + message);
-			writer.print(message);
+			try {
+				dos.writeUTF(id);
+				dos.writeUTF(Config.TextPrefix);
+				dos.writeInt(message.length());
+				dos.writeUTF(message);
+				dos.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			/*char[] charArray = message.toCharArray();
+			String lengthStr = String.valueOf(charArray.length);
+			while(lengthStr.length() < 4)
+				lengthStr = "0" + lengthStr;
+			writer.write(id);
+			writer.write(Config.TextPrefix);
+			writer.write(lengthStr);
+			writer.write(charArray, 0, charArray.length);
+			writer.flush();*/
+			return true;
+		}
+		else
+			return false;
+	}
+	
+	public boolean sendImage(File file) {  
+		if(isConnected){
+			FileInputStream fis = null;
+			try {
+				fis = new FileInputStream(file);
+			} catch (FileNotFoundException e2) {
+				e2.printStackTrace();
+			}
+	        BufferedInputStream bis = new BufferedInputStream(fis);
+	        byte[] byteArray = new byte[(int) file.length()];
+	        try {
+				bis.read(byteArray, 0, byteArray.length);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			String lengthStr = String.valueOf(byteArray.length);
+			while(lengthStr.length() < 4)
+				lengthStr = "0" + lengthStr;
+			writer.write(id);
+			writer.write(Config.TextPrefix);
+			writer.write(lengthStr);
+			try {
+				socket.getOutputStream().write(byteArray);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			writer.flush();
 			return true;
 		}
@@ -66,12 +109,6 @@ public class Client {
 
 	public boolean disConnect() {
 		try {  
-			sendMsg("");
-			if(msgThread != null)
-				msgThread.stop();
-			if (reader != null) {  
-				reader.close();  
-			}  
 			if (writer != null) {  
 				writer.close();  
 			}
@@ -85,55 +122,5 @@ public class Client {
 			isConnected = true;  
 			return false;  
 		}  
-	}  
-	
-	class MessageThread extends Thread {
-		private BufferedReader msgReader;
-		public MessageThread(BufferedReader msgReader) {
-			this.msgReader = msgReader;
-		}
-		public void run() {
-			String messageStr = null;
-			while(true) {
-				try {
-					char[] buff = new char[1024];
-					int read;
-					StringBuilder response = new StringBuilder();
-					while((read = msgReader.read(buff)) != -1) {
-					    response.append(buff, 0, read);  
-					}
-					messageStr = response.toString();
-					if(messageStr == null || messageStr.equals(new String(""))) {
-						System.out.println("continue");
-						continue;
-					}
-					System.out.println(messageStr);
-					Message message = new Message();
-					String content = null;
-					if(messageStr.startsWith(Config.TextPrefix)){
-						content = messageStr.substring(4, messageStr.length());
-						SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm::ss");
-						Calendar calendar = Calendar.getInstance();
-						Date date = calendar.getTime();
-						message.friendId = id;
-						message.isUser = false;
-						message.type = MessageType.Text;
-						message.time = sdf.format(date);
-						message.content = content;
-					}
-					mf.recieveMsg(message);
-					messageStr = null;
-				} catch (IOException e) {
-					JOptionPane.showMessageDialog(null, "Á¬½Ó¶Ï¿ª", "Info",  
-							JOptionPane.INFORMATION_MESSAGE);
-					try {
-						msgReader.close();
-						return;
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		}
 	}
 }

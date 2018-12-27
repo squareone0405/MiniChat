@@ -1,6 +1,7 @@
 package socket;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -88,55 +89,68 @@ public class Server {
 	
 	class ClientThread extends Thread {
 		Socket socket;
-		BufferedReader reader;  
-	    PrintWriter writer; 
+	    DataInputStream dis;
 	    public ClientThread(Socket clientSocket) {
 	    	this.socket = clientSocket;
-	    	 try {
-				reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}  
-	         try {
-				writer = new PrintWriter(socket.getOutputStream());
+	        try {
+				dis = new DataInputStream(socket.getInputStream());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 	    }
 	    public void run() {
-	    	String messageStr = null;
+	    	String id = null;
+	    	String type = null;
+			int length = 0;
 	    	while(true) {
 	    		try {
-	    			messageStr = reader.readLine();
-					if(messageStr == null) {
-						continue;
-					}
-					char[] buff = new char[1024];
-					int read;
-					StringBuilder response= new StringBuilder();
-					while((read = reader.read(buff)) != -1) {
-					    response.append(buff, 0, read );  
-					}
-					messageStr = response.toString();
-					if(messageStr == null) {
-						System.out.println("continue");
-						continue;
-					}
-					System.out.println(messageStr);
-					Message message = new Message();
-					String content = null;
-					if(messageStr.startsWith(Config.TextPrefix)){
-						content = messageStr.substring(4, messageStr.length());
-						message.friendId = "unknown";
+	    			id = dis.readUTF();
+	    			type = dis.readUTF();
+	    			length = dis.readInt();
+	    			Message message = new Message();
+					if(type.equals(Config.TextPrefix)){
+						String content = dis.readUTF();
+						message.friendId = id;
 						message.isUser = false;
 						message.type = MessageType.Text;
 						message.time = Tools.getCurentTime();
 						message.content = content;
 					}
 					mf.recieveMsg(message);
+					/*while(true){
+						length = reader.read(prefix, 0, 18);
+						if(length > 0)
+							break;
+					}
+					str = String.valueOf(prefix);
+					if(str == null || str.equals(new String(""))) {
+						continue;
+					}
+					System.out.println(str);
+					String id = str.substring(0, 10);
+					String typeStr = str.substring(10, 14);
+					String lengthStr = str.substring(14, 18);
+					int msgLength = Integer.parseInt(lengthStr);
+					char[] content = new char[msgLength];
+					reader.read(content, 0, msgLength);
+					Message message = new Message();	
+					if(typeStr.equals(Config.TextPrefix)){
+						message.friendId = id;
+						message.isUser = false;
+						message.type = MessageType.Text;
+						message.time = Tools.getCurentTime();
+						message.content = String.valueOf(content);
+					}
+					mf.recieveMsg(message);*/
 				} catch (IOException e) {
-					e.printStackTrace();
-				}      		
+					//JOptionPane.showMessageDialog(null, "Á¬½Ó¶Ï¿ª", "Info", JOptionPane.INFORMATION_MESSAGE);
+					try {
+						dis.close();
+						return;
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}    		
 	    	}
 	    }
 	}
