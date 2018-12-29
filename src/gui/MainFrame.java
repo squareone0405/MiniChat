@@ -45,14 +45,16 @@ public class MainFrame extends JFrame{
 	private JButton btnSendEmoji;
 	private JButton btnSendFile;
 	private JButton btnSendAudio;
-	private JButton btnRefresh;
-	private JButton btnAddGroup;
 	private JTextPane paneMsg;
 	private JScrollPane spMsg;
+	
+	private EmojiFrame emojiFrame;
 	
 	private JPanel optionPanel;
 	private JTextField textNewFriend;
 	private JButton btnAddFriend;
+	private JButton btnRefresh;
+	private JButton btnAddGroup;
 	private JButton btnDeleteFriend;
 	private JButton btnClearHistory;
 	private JLabel lblCurrentChat;
@@ -207,6 +209,7 @@ public class MainFrame extends JFrame{
 					}
 				}
 				);
+				
 		btnSendImage.setBounds(200, 450, 30, 30);
 		btnSendEmoji.setBounds(235, 450, 30, 30);
 		btnSendFile.setBounds(270, 450, 30, 30);
@@ -294,11 +297,13 @@ public class MainFrame extends JFrame{
 		optionPanel.add(btnDeleteFriend);
 		optionPanel.add(btnClearHistory);
 		optionPanel.add(lblCurrentChat);
-
+		
 		this.getContentPane().add(spContacts);
 		this.getContentPane().add(spMessage);	
 		this.getContentPane().add(optionPanel);
 		this.getContentPane().add(chatPanel);
+		
+		emojiFrame = new EmojiFrame(paneMsg);
 		
 		this.addWindowListener(new WindowAdapter() {  
 			public void windowClosing(WindowEvent e) {  
@@ -409,22 +414,21 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void sendEmoji(){
-		Collection<Emoji> list =  EmojiManager.getAll();
-		/*Iterator<Emoji> it = list.iterator();
+		/*Collection<Emoji> list =  EmojiManager.getAll();
+		Iterator<Emoji> it = list.iterator();
 		while(it.hasNext()){
 			System.out.println(it.next().getUnicode());
-		}*/
+		}
 		System.out.println(list.size());
 		Emoji emoji = EmojiManager.getForAlias("fr");
 		System.out.println("HEY: " + emoji.getUnicode());
 		System.out.println("\ud83d\ude00");
-		lblCurrentChat.setText("\uD83D\uDD0A");
+		lblCurrentChat.setText("<html>\ud83d\ude00");
 		String str = "An :grinning:awesome :smiley:string &#128516;with a few :wink:emojis!";
 		String result = EmojiParser.parseToUnicode(str);
 		paneMsg.setText(result);
-		System.out.println(EmojiManager.isEmoji("\uD83D\uDD0A"));
-		if(!checkBeforeSend())
-			return;
+		System.out.println(EmojiManager.isEmoji("\uD83D\uDD0A"));*/
+		emojiFrame.setVisible(true);
 	}
 	
 	private void sendAudio(){

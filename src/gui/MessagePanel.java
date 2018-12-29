@@ -4,14 +4,20 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import javax.imageio.ImageIO;
 import javax.swing.Box;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.text.ComponentView;
@@ -49,7 +55,7 @@ public class MessagePanel extends JPanel {
 		return imageIcon;
 	}
 	
-	public MessagePanel(Message msg){
+	public MessagePanel(Message msg, JList list, int index){
 		super();
 		JLabel sender = new JLabel(msg.friendId + ":" + "(" + msg.time + ")");
 		sender.setFont(new Font("times new roman", Font.PLAIN, 15));
@@ -72,7 +78,7 @@ public class MessagePanel extends JPanel {
 			content.setFont(new Font("Î¢ÈíÑÅºÚ", Font.PLAIN, 15));
 			content.setLocation(0, 20);
 			content.setSize(300, 40);
-			content.setSize(300, content.getPreferredSize().height + 10);
+			content.setSize(300, content.getPreferredSize().height);
 		    this.add(content);
 		    this.setPreferredSize(new Dimension(560, content.getHeight() + 30));
 		    break;
@@ -98,6 +104,9 @@ public class MessagePanel extends JPanel {
 			} catch (IOException e) {
 				bufferdImg = corruptImg;
 			}
+			System.out.println(imgPath);
+			ImageIcon icon = new ImageIcon(getClass().getResource("timg.gif"));
+			icon.setImageObserver(new AnimatedObserver(list, index));
 			int width = bufferdImg.getWidth();
 			int height = bufferdImg.getHeight();
 			if(width > 200){
@@ -108,12 +117,12 @@ public class MessagePanel extends JPanel {
 			ImageIcon imageIcon = new ImageIcon(img);
 			imgLabel.setBounds(0, 20, width, height);
 			imgLabel.setHorizontalAlignment(JLabel.CENTER);
-			imgLabel.setIcon(imageIcon);
+			imgLabel.setIcon(icon);
 			this.add(imgLabel);
 			this.setPreferredSize(new Dimension(560,imgLabel.getHeight() + 30));
 		default:
 		    break;
-		}	
+		}
 		if(msg.isUser){
 			sender.setHorizontalAlignment(JLabel.RIGHT);
 			imgLabel.setLocation(560 - imgLabel.getWidth(), 20);
@@ -121,6 +130,26 @@ public class MessagePanel extends JPanel {
 			content.setLocation(260, 20);
 		}
 		this.add(sender);
+	}
+	
+	class AnimatedObserver implements ImageObserver
+	{
+	   JList list;
+	   int index;
+	  
+	   public AnimatedObserver(JList list, int index) {
+	      this.list = list;
+	      this.index = index;
+	   } 
+	  
+	   public boolean imageUpdate (Image img, int infoflags, int x, int y, int width, int height) {
+	      if ((infoflags & (FRAMEBITS|ALLBITS)) != 0) {
+	         Rectangle rect = list.getCellBounds(index, index);
+	         list.repaint(rect);
+	      }
+	  
+	      return (infoflags & (ALLBITS|ABORT)) == 0;
+	   }
 	}
 	
 	class WrapEditorKit extends StyledEditorKit {
