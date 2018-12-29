@@ -13,7 +13,15 @@ import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.text.ComponentView;
+import javax.swing.text.Element;
+import javax.swing.text.IconView;
+import javax.swing.text.LabelView;
+import javax.swing.text.StyledEditorKit;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
+import javax.swing.text.*;
 
 import util.*;
 
@@ -46,36 +54,38 @@ public class MessagePanel extends JPanel {
 		JLabel sender = new JLabel(msg.friendId + ":" + "(" + msg.time + ")");
 		sender.setFont(new Font("times new roman", Font.PLAIN, 15));
 		sender.setBounds(0, 0, 560, 20);
-		JTextArea content = new JTextArea();
+		JTextPane content = new JTextPane();
 		JLabel imgLabel = new JLabel();
 		BufferedImage bufferdImg = null;
 		Box fileBox = Box.createHorizontalBox();
 		this.setLayout(null);
 		switch(msg.type){
 		case Text:
-			content.setBounds(0, 20, 300, 20);
+			content.setBounds(0, 20, 300, 20);	
+			content.setContentType("text/html");
+			content.setEditorKit(new WrapEditorKit());
 			content.setText(msg.content);
-			content.setWrapStyleWord(true);
-			content.setLineWrap(true);
 			content.setOpaque(true);
 			content.setEditable(false);
 			content.setFocusable(false);
 			content.setBackground(new Color(220, 220, 220));
-			content.setFont(new Font("华文宋体", Font.PLAIN, 20));
-		    content.setSize(content.getPreferredSize());
+			content.setFont(new Font("微软雅黑", Font.PLAIN, 15));
+			content.setLocation(0, 20);
+			content.setSize(300, 40);
+			content.setSize(300, content.getPreferredSize().height + 10);
 		    this.add(content);
-		    this.setPreferredSize(new Dimension(560,content.getHeight() + 30));
+		    this.setPreferredSize(new Dimension(560, content.getHeight() + 30));
 		    break;
 		case File:
 			fileBox.setBounds(0, 20, 300, 100);
 			JLabel fileLabel = new JLabel(fileImg);
 			JLabel nameLabel = new JLabel(msg.content);
-			nameLabel.setFont(new Font("华文宋体", Font.PLAIN, 18));
+			nameLabel.setFont(new Font("华文宋体", Font.PLAIN, 15));
 			nameLabel.setAutoscrolls(true);
 			fileBox.add(fileLabel);
 			fileBox.add(nameLabel);
 		    this.add(fileBox);
-		    this.setPreferredSize(new Dimension(560,fileBox.getHeight() + 30));
+		    this.setPreferredSize(new Dimension(560,fileBox.getHeight() + 10));
 		    break;
 		case Image:
 			String imgPath = null;
@@ -112,4 +122,49 @@ public class MessagePanel extends JPanel {
 		}
 		this.add(sender);
 	}
+	
+	class WrapEditorKit extends StyledEditorKit {
+	  ViewFactory defaultFactory = new WrapColumnFactory();
+	  public ViewFactory getViewFactory() {
+	    return defaultFactory;
+	  }
+	}
+
+	class WrapColumnFactory implements ViewFactory {
+	  public View create(Element elem) {
+	    String kind = elem.getName();
+	    if (kind != null) {
+	      if (kind.equals(AbstractDocument.ContentElementName)) {
+	        return new WrapLabelView(elem);
+	      } else if (kind.equals(AbstractDocument.ParagraphElementName)) {
+	        return new ParagraphView(elem);
+	      } else if (kind.equals(AbstractDocument.SectionElementName)) {
+	        return new BoxView(elem, View.Y_AXIS);
+	      } else if (kind.equals(StyleConstants.ComponentElementName)) {
+	        return new ComponentView(elem);
+	      } else if (kind.equals(StyleConstants.IconElementName)) {
+	        return new IconView(elem);
+	      }
+	    }
+	    return new LabelView(elem);
+	  }
+	}
+
+	class WrapLabelView extends LabelView {
+	  public WrapLabelView(Element elem) {
+	    super(elem);
+	  }
+	  public float getMinimumSpan(int axis) {
+	    switch (axis) {
+	    case View.X_AXIS:
+	      return 0;
+	    case View.Y_AXIS:
+	      return super.getMinimumSpan(axis);
+	    default:
+	      throw new IllegalArgumentException("Invalid axis: " + axis);
+	    }
+	  }
+	}
 }
+
+

@@ -9,19 +9,20 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.FileFilter;
-import java.net.Socket;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.vdurmont.emoji.Emoji;
+import com.vdurmont.emoji.EmojiManager;
+import com.vdurmont.emoji.EmojiParser;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javafx.util.Pair;
 
@@ -46,7 +47,7 @@ public class MainFrame extends JFrame{
 	private JButton btnSendAudio;
 	private JButton btnRefresh;
 	private JButton btnAddGroup;
-	private JTextArea areaMsg;
+	private JTextPane paneMsg;
 	private JScrollPane spMsg;
 	
 	private JPanel optionPanel;
@@ -90,15 +91,15 @@ public class MainFrame extends JFrame{
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void initComponent(){
-		Font font = new Font("Î¢ÈíÑÅºÚ", Font.BOLD, 15);
-		Font fontMsg = new Font("Î¢ÈíÑÅºÚ", Font.PLAIN, 18);
-		Font fontAdd = new Font("Î¢ÈíÑÅºÚ", Font.PLAIN, 16);
+		Font font = new Font("å¾®è½¯é›…é»‘", Font.BOLD, 15);
+		Font fontMsg = new Font("å¾®è½¯é›…é»‘", Font.PLAIN, 18);
+		Font fontAdd = new Font("å¾®è½¯é›…é»‘", Font.PLAIN, 16);
 		Color myLightGray = new Color(240,240,240);
 		Color myGray = new Color(200,200,200);
 		UIManager.put("Button.font", font);
 		UIManager.put("Button.background", myGray);
 		UIManager.put("Button.border", new Color(0, 0, 0));
-		UIManager.put("TextArea.font", fontMsg);
+		UIManager.put("TextPane.font", fontMsg);
 		UIManager.put("TextField.font", fontAdd);
 		UIManager.put("Label.font", font);
 		UIManager.put("List.background", myLightGray);
@@ -142,7 +143,7 @@ public class MainFrame extends JFrame{
 		btnSendEmoji = new JButton();
 		btnSendAudio = new JButton();
 		btnSendFile = new JButton();
-		btnSendMsg = new JButton("·¢ËÍ");
+		btnSendMsg = new JButton("å‘é€");
 		
 		ImageIcon iconSendImage = new ImageIcon(Config.SendImagePath);
 		Image tempSendImage = iconSendImage.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
@@ -164,9 +165,8 @@ public class MainFrame extends JFrame{
 		btnSendAudio.setIcon(new ImageIcon(tempSendAudio));
 		btnSendAudio.setOpaque(false);
 		
-		areaMsg = new JTextArea();
-		areaMsg.setLineWrap(true);
-		spMsg = new JScrollPane(areaMsg);
+		paneMsg = new JTextPane();
+		spMsg = new JScrollPane(paneMsg);
 		btnSendFile.addActionListener(
 				new ActionListener() {
 					@Override
@@ -225,17 +225,17 @@ public class MainFrame extends JFrame{
 		//for optionpanel
 		optionPanel = new JPanel();
 		textNewFriend  = new JTextField();
-		btnAddFriend = new JButton("Ìí¼ÓºÃÓÑ");
+		btnAddFriend = new JButton("æ·»åŠ å¥½å‹");
 		btnRefresh = new JButton();
 		ImageIcon iconRefreshImage = new ImageIcon(Config.RefreshPath);
 		Image tempRefresh = iconRefreshImage.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
 		btnRefresh.setIcon(new ImageIcon(tempRefresh));
 		btnRefresh.setOpaque(false);
-		btnAddGroup = new JButton("Ìí¼ÓÈºÁÄ");
-		btnDeleteFriend = new JButton("É¾³ıºÃÓÑ");
-		btnClearHistory = new JButton("Çå¿ÕÁÄÌì¼ÇÂ¼");
+		btnAddGroup = new JButton("æ·»åŠ ç¾¤èŠ");
+		btnDeleteFriend = new JButton("åˆ é™¤å¥½å‹");
+		btnClearHistory = new JButton("æ¸…ç©ºèŠå¤©è®°å½•");
 		lblCurrentChat = new JLabel();
-		lblCurrentChat.setFont(new Font("»ªÎÄËÎÌå", Font.BOLD, 22));
+		lblCurrentChat.setFont(new Font("åæ–‡å®‹ä½“", Font.BOLD, 22));
 		lblCurrentChat.setHorizontalAlignment(JLabel.RIGHT);
 		lblCurrentChat.setOpaque(true);
 		btnAddFriend.addActionListener(
@@ -347,7 +347,7 @@ public class MainFrame extends JFrame{
 	private void sendMsg() {
 		if(!checkBeforeSend())
 			return;
-		String content = areaMsg.getText();
+		String content = paneMsg.getText();
 		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Text, content);
 		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
@@ -359,7 +359,7 @@ public class MainFrame extends JFrame{
 			clientTable.put(currentFriend, new Client(userName, ipTable.get(currentFriend)));
 			clientTable.get(currentFriend).sendMsg(content);
 		}
-		areaMsg.setText("");
+		paneMsg.setText("");
 	}
 	
 	private void sendFile(){
@@ -409,6 +409,20 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void sendEmoji(){
+		Collection<Emoji> list =  EmojiManager.getAll();
+		/*Iterator<Emoji> it = list.iterator();
+		while(it.hasNext()){
+			System.out.println(it.next().getUnicode());
+		}*/
+		System.out.println(list.size());
+		Emoji emoji = EmojiManager.getForAlias("fr");
+		System.out.println("HEY: " + emoji.getUnicode());
+		System.out.println("\ud83d\ude00");
+		lblCurrentChat.setText("\uD83D\uDD0A");
+		String str = "An :grinning:awesome :smiley:string &#128516;with a few :wink:emojis!";
+		String result = EmojiParser.parseToUnicode(str);
+		paneMsg.setText(result);
+		System.out.println(EmojiManager.isEmoji("\uD83D\uDD0A"));
 		if(!checkBeforeSend())
 			return;
 	}
@@ -420,7 +434,7 @@ public class MainFrame extends JFrame{
 	
 	private boolean checkBeforeSend(){
 		if(!ipTable.containsKey(currentFriend) || ipTable.get(currentFriend).equals(new String(""))) {
-			JOptionPane.showMessageDialog(this, "¸ÃºÃÓÑ²»ÔÚÏß£¬ÎŞ·¨·¢ËÍÏûÏ¢", "Waring", 
+			JOptionPane.showMessageDialog(this, "è¯¥å¥½å‹ä¸åœ¨çº¿ï¼Œæ— æ³•å‘é€æ¶ˆæ¯", "Waring", 
 					JOptionPane.WARNING_MESSAGE);
 			return false;
 		}
@@ -431,12 +445,12 @@ public class MainFrame extends JFrame{
 		System.out.println("add friend");
 		String friendStr = textNewFriend.getText();
 		if(friendStr.length() != 10){
-			JOptionPane.showMessageDialog(this, "ÇëÊäÈëºÃÓÑÑ§ºÅ", "Waring", 
+			JOptionPane.showMessageDialog(this, "è¯·è¾“å…¥å¥½å‹å­¦å·", "Waring", 
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
 		if(friendStr.equals(userName)){
-			JOptionPane.showMessageDialog(this, "²éÑ¯Ñ§ºÅÎª±¾»ú", "Waring", 
+			JOptionPane.showMessageDialog(this, "æŸ¥è¯¢å­¦å·ä¸ºæœ¬æœº", "Waring", 
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
@@ -540,7 +554,7 @@ public class MainFrame extends JFrame{
 	}
 	
 	public void recieveIncorretNo(){
-		JOptionPane.showMessageDialog(this, "ÇëÊäÈëÕıÈ·µÄÑ§ºÅ", "Waring", 
+		JOptionPane.showMessageDialog(this, "è¯·è¾“å…¥æ­£ç¡®çš„å­¦å·", "Waring", 
 				JOptionPane.WARNING_MESSAGE);
 	}
 }
