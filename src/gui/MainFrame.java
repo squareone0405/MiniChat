@@ -8,18 +8,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import com.vdurmont.emoji.Emoji;
-import com.vdurmont.emoji.EmojiManager;
-import com.vdurmont.emoji.EmojiParser;
-
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,7 +92,7 @@ public class MainFrame extends JFrame{
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void initComponent(){
 		Font font = new Font("微软雅黑", Font.BOLD, 15);
-		Font fontMsg = new Font("微软雅黑", Font.PLAIN, 18);
+		Font fontMsg = new Font("Segoe UI Emoji", Font.PLAIN, 18);
 		Font fontAdd = new Font("微软雅黑", Font.PLAIN, 16);
 		Color myLightGray = new Color(240,240,240);
 		Color myGray = new Color(200,200,200);
@@ -326,6 +324,7 @@ public class MainFrame extends JFrame{
 		friendList = dbManager.getContactsList();
 		for(String friend:friendList){
             contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(friend, false)));
+			//contactModel.addElement(new Pair<String, Boolean>(friend, false));
         }
 	}
 	
@@ -414,24 +413,48 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void sendEmoji(){
-		/*Collection<Emoji> list =  EmojiManager.getAll();
-		Iterator<Emoji> it = list.iterator();
-		while(it.hasNext()){
-			System.out.println(it.next().getUnicode());
-		}
-		System.out.println(list.size());
-		Emoji emoji = EmojiManager.getForAlias("fr");
-		System.out.println("HEY: " + emoji.getUnicode());
-		System.out.println("\ud83d\ude00");
-		lblCurrentChat.setText("<html>\ud83d\ude00");
-		String str = "An :grinning:awesome :smiley:string &#128516;with a few :wink:emojis!";
-		String result = EmojiParser.parseToUnicode(str);
-		paneMsg.setText(result);
-		System.out.println(EmojiManager.isEmoji("\uD83D\uDD0A"));*/
 		emojiFrame.setVisible(true);
 	}
-	
+
 	private void sendAudio(){
+		AudioFileFormat.Type fileType = AudioFileFormat.Type.WAVE;
+		TargetDataLine line = null;
+		float sampleRate = 16000;
+        int sampleSizeInBits = 8;
+        int channels = 2;
+        boolean signed = true;
+        boolean bigEndian = true;
+        AudioFormat format = new AudioFormat(sampleRate, sampleSizeInBits,
+                                             channels, signed, bigEndian);
+        DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+        if (!AudioSystem.isLineSupported(info)) {
+            System.out.println("Line not supported");
+            System.exit(0);
+        }
+        try {
+			line = (TargetDataLine) AudioSystem.getLine(info);
+			line.open(format);
+		} catch (LineUnavailableException e) {
+			e.printStackTrace();
+		}
+        ByteArrayOutputStream out  = new ByteArrayOutputStream();
+        int numBytesRead;
+        byte[] data = new byte[line.getBufferSize() / 5];
+        line.start();
+        /*for(int i = 0; i < 100; ++i){
+        	numBytesRead =  line.read(data, 0, data.length);
+            // Save this chunk of data.
+            out.write(data, 0, numBytesRead);
+        }*/
+        System.out.println("Start capturing...");
+        AudioInputStream ais = new AudioInputStream(line);
+        System.out.println("Start recording...");
+        File wavFile = new File("F:/WorkSpace/RecordAudio.wav");
+        try {
+			AudioSystem.write(ais, fileType, wavFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		if(!checkBeforeSend())
 			return;
 	}

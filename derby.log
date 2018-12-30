@@ -1,0 +1,19 @@
+----------------------------------------------------------------
+Mon Dec 31 01:00:01 CST 2018:
+正在使用类加载程序 sun.misc.Launcher$AppClassLoader@73d16e93 引导数据库
+目录 F:\WorkSpace\Java\MiniChat\2016011503 中的 Derby 版本 The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579) 实例 a816c00e-0168-000e-df5b-00000984f118
+已从 file:/D:/Developer/sql_java/db-derby-10.14.2.0-bin/lib/derby.jar 加载
+java.vendor=Oracle Corporation
+java.runtime.version=1.8.0_131-b11
+user.dir=F:\WorkSpace\Java\MiniChat
+os.name=Windows 10
+os.arch=amd64
+os.version=10.0
+derby.system.home=null
+数据库类加载程序已启动 - derby.database.classpath=''
+----------------------------------------------------------------
+Mon Dec 31 01:00:49 CST 2018：正在关闭 Derby 引擎
+----------------------------------------------------------------
+Mon Dec 31 01:00:49 CST 2018:
+正在使用类加载程序 sun.misc.Launcher$AppClassLoader@73d16e93 关闭数据库目录 F:\WorkSpace\Java\MiniChat\2016011503 上的实例 a816c00e-0168-000e-df5b-00000984f118
+----------------------------------------------------------------

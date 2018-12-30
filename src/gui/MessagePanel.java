@@ -9,15 +9,11 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import javax.imageio.ImageIO;
 import javax.swing.Box;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.text.ComponentView;
@@ -55,7 +51,7 @@ public class MessagePanel extends JPanel {
 		return imageIcon;
 	}
 	
-	public MessagePanel(Message msg, JList list, int index){
+	public MessagePanel(Message msg){
 		super();
 		JLabel sender = new JLabel(msg.friendId + ":" + "(" + msg.time + ")");
 		sender.setFont(new Font("times new roman", Font.PLAIN, 15));
@@ -67,8 +63,7 @@ public class MessagePanel extends JPanel {
 		this.setLayout(null);
 		switch(msg.type){
 		case Text:
-			content.setBounds(0, 20, 300, 20);	
-			content.setContentType("text/html");
+			content.setBounds(0, 20, 300, 20);
 			content.setEditorKit(new WrapEditorKit());
 			content.setText(msg.content);
 			content.setOpaque(true);
@@ -104,9 +99,6 @@ public class MessagePanel extends JPanel {
 			} catch (IOException e) {
 				bufferdImg = corruptImg;
 			}
-			System.out.println(imgPath);
-			ImageIcon icon = new ImageIcon(getClass().getResource("timg.gif"));
-			icon.setImageObserver(new AnimatedObserver(list, index));
 			int width = bufferdImg.getWidth();
 			int height = bufferdImg.getHeight();
 			if(width > 200){
@@ -115,9 +107,10 @@ public class MessagePanel extends JPanel {
 			}
 			Image img = bufferdImg.getScaledInstance(width, height, Image.SCALE_SMOOTH);
 			ImageIcon imageIcon = new ImageIcon(img);
+			imageIcon.setImageObserver(new AnimatedObserver(imgLabel));
 			imgLabel.setBounds(0, 20, width, height);
 			imgLabel.setHorizontalAlignment(JLabel.CENTER);
-			imgLabel.setIcon(icon);
+			imgLabel.setIcon(imageIcon);
 			this.add(imgLabel);
 			this.setPreferredSize(new Dimension(560,imgLabel.getHeight() + 30));
 		default:
@@ -131,69 +124,64 @@ public class MessagePanel extends JPanel {
 		}
 		this.add(sender);
 	}
-	
+
 	class AnimatedObserver implements ImageObserver
 	{
-	   JList list;
-	   int index;
-	  
-	   public AnimatedObserver(JList list, int index) {
-	      this.list = list;
-	      this.index = index;
-	   } 
-	  
-	   public boolean imageUpdate (Image img, int infoflags, int x, int y, int width, int height) {
-	      if ((infoflags & (FRAMEBITS|ALLBITS)) != 0) {
-	         Rectangle rect = list.getCellBounds(index, index);
-	         list.repaint(rect);
-	      }
-	  
-	      return (infoflags & (ALLBITS|ABORT)) == 0;
-	   }
+		JLabel label;
+
+		public AnimatedObserver(JLabel label) {
+			this.label = label;
+		} 
+
+		public boolean imageUpdate (Image img, int infoflags, int x, int y, int width, int height) {
+			if ((infoflags & (FRAMEBITS|ALLBITS)) != 0) {
+				Rectangle rect = label.getBounds();
+				label.repaint(rect);
+			}
+			return (infoflags & (ALLBITS|ABORT)) == 0;
+		}
 	}
-	
+
 	class WrapEditorKit extends StyledEditorKit {
-	  ViewFactory defaultFactory = new WrapColumnFactory();
-	  public ViewFactory getViewFactory() {
-	    return defaultFactory;
-	  }
+		ViewFactory defaultFactory = new WrapColumnFactory();
+		public ViewFactory getViewFactory() {
+			return defaultFactory;
+		}
 	}
 
 	class WrapColumnFactory implements ViewFactory {
-	  public View create(Element elem) {
-	    String kind = elem.getName();
-	    if (kind != null) {
-	      if (kind.equals(AbstractDocument.ContentElementName)) {
-	        return new WrapLabelView(elem);
-	      } else if (kind.equals(AbstractDocument.ParagraphElementName)) {
-	        return new ParagraphView(elem);
-	      } else if (kind.equals(AbstractDocument.SectionElementName)) {
-	        return new BoxView(elem, View.Y_AXIS);
-	      } else if (kind.equals(StyleConstants.ComponentElementName)) {
-	        return new ComponentView(elem);
-	      } else if (kind.equals(StyleConstants.IconElementName)) {
-	        return new IconView(elem);
-	      }
-	    }
-	    return new LabelView(elem);
-	  }
+		public View create(Element elem) {
+			String kind = elem.getName();
+			if (kind != null) {
+				if (kind.equals(AbstractDocument.ContentElementName)) {
+					return new WrapLabelView(elem);
+				} else if (kind.equals(AbstractDocument.ParagraphElementName)) {
+					return new ParagraphView(elem);
+				} else if (kind.equals(AbstractDocument.SectionElementName)) {
+					return new BoxView(elem, View.Y_AXIS);
+				} else if (kind.equals(StyleConstants.ComponentElementName)) {
+					return new ComponentView(elem);
+				} else if (kind.equals(StyleConstants.IconElementName)) {
+					return new IconView(elem);
+				}
+			}
+			return new LabelView(elem);
+		}
 	}
 
 	class WrapLabelView extends LabelView {
-	  public WrapLabelView(Element elem) {
-	    super(elem);
-	  }
-	  public float getMinimumSpan(int axis) {
-	    switch (axis) {
-	    case View.X_AXIS:
-	      return 0;
-	    case View.Y_AXIS:
-	      return super.getMinimumSpan(axis);
-	    default:
-	      throw new IllegalArgumentException("Invalid axis: " + axis);
-	    }
-	  }
+		public WrapLabelView(Element elem) {
+			super(elem);
+		}
+		public float getMinimumSpan(int axis) {
+			switch (axis) {
+			case View.X_AXIS:
+				return 0;
+			case View.Y_AXIS:
+				return super.getMinimumSpan(axis);
+			default:
+				throw new IllegalArgumentException("Invalid axis: " + axis);
+			}
+		}
 	}
 }
-
-
