@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 
 import java.awt.Font;
@@ -69,6 +70,7 @@ public class MainFrame extends JFrame{
 	private CentralServerClient csClient;
 	private HashMap<String, Client> clientTable;
 	private boolean isResponsed;
+	private boolean isRecording;
 	
 	public MainFrame(String userName, CentralServerClient csClient) {
 		super("MiniChat");
@@ -86,6 +88,7 @@ public class MainFrame extends JFrame{
 		clientTable = new HashMap<String, Client>();
 		messageModelList = new HashMap<String, DefaultListModel<MessagePanel>>();
 		isResponsed = true;
+		isRecording = false;
 		loadAllFormDB();
 	}
 	
@@ -296,10 +299,10 @@ public class MainFrame extends JFrame{
 		optionPanel.add(btnClearHistory);
 		optionPanel.add(lblCurrentChat);
 		
-		this.getContentPane().add(spContacts);
-		this.getContentPane().add(spMessage);	
-		this.getContentPane().add(optionPanel);
-		this.getContentPane().add(chatPanel);
+		this.getContentPane().add(BorderLayout.CENTER, spContacts);
+		this.getContentPane().add(BorderLayout.CENTER, spMessage);	
+		this.getContentPane().add(BorderLayout.CENTER, optionPanel);
+		this.getContentPane().add(BorderLayout.CENTER, chatPanel);
 		
 		emojiFrame = new EmojiFrame(paneMsg);
 		
@@ -324,7 +327,6 @@ public class MainFrame extends JFrame{
 		friendList = dbManager.getContactsList();
 		for(String friend:friendList){
             contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(friend, false)));
-			//contactModel.addElement(new Pair<String, Boolean>(friend, false));
         }
 	}
 	
@@ -455,8 +457,21 @@ public class MainFrame extends JFrame{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+        Thread stopper = new Thread(new Runnable() {
+            public void run() {
+                while(isRecording){
+                	continue;
+                }
+                doneRecord();
+            }
+        });
+        stopper.start();
 		if(!checkBeforeSend())
 			return;
+	}
+	
+	private void doneRecord(){
+		
 	}
 	
 	private boolean checkBeforeSend(){

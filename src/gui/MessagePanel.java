@@ -14,6 +14,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.text.ComponentView;
@@ -51,18 +52,22 @@ public class MessagePanel extends JPanel {
 		return imageIcon;
 	}
 	
+	private ImageIcon imageIcon;
+	
 	public MessagePanel(Message msg){
 		super();
 		JLabel sender = new JLabel(msg.friendId + ":" + "(" + msg.time + ")");
 		sender.setFont(new Font("times new roman", Font.PLAIN, 15));
 		sender.setBounds(0, 0, 560, 20);
-		JTextPane content = new JTextPane();
-		JLabel imgLabel = new JLabel();
+		JTextPane content = null;
+		JLabel imgLabel = null;
 		BufferedImage bufferdImg = null;
-		Box fileBox = Box.createHorizontalBox();
+		imageIcon = null;
+		Box fileBox = null;
 		this.setLayout(null);
 		switch(msg.type){
 		case Text:
+			content = new JTextPane();
 			content.setBounds(0, 20, 300, 20);
 			content.setEditorKit(new WrapEditorKit());
 			content.setText(msg.content);
@@ -78,6 +83,7 @@ public class MessagePanel extends JPanel {
 		    this.setPreferredSize(new Dimension(560, content.getHeight() + 30));
 		    break;
 		case File:
+			fileBox = Box.createHorizontalBox();
 			fileBox.setBounds(0, 20, 300, 100);
 			JLabel fileLabel = new JLabel(fileImg);
 			JLabel nameLabel = new JLabel(msg.content);
@@ -89,6 +95,7 @@ public class MessagePanel extends JPanel {
 		    this.setPreferredSize(new Dimension(560,fileBox.getHeight() + 10));
 		    break;
 		case Image:
+			imgLabel = new JLabel();
 			String imgPath = null;
 			if(msg.isUser)
 				imgPath = msg.content;
@@ -106,8 +113,7 @@ public class MessagePanel extends JPanel {
 				width = 200;
 			}
 			Image img = bufferdImg.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-			ImageIcon imageIcon = new ImageIcon(img);
-			imageIcon.setImageObserver(new AnimatedObserver(imgLabel));
+			imageIcon = new ImageIcon(img);
 			imgLabel.setBounds(0, 20, width, height);
 			imgLabel.setHorizontalAlignment(JLabel.CENTER);
 			imgLabel.setIcon(imageIcon);
@@ -118,25 +124,35 @@ public class MessagePanel extends JPanel {
 		}
 		if(msg.isUser){
 			sender.setHorizontalAlignment(JLabel.RIGHT);
-			imgLabel.setLocation(560 - imgLabel.getWidth(), 20);
-			fileBox.setLocation(260, 20);
-			content.setLocation(260, 20);
+			if(imgLabel != null)
+				imgLabel.setLocation(560 - imgLabel.getWidth(), 20);
+			if(fileBox != null)
+				fileBox.setLocation(260, 20);
+			if(content != null)
+				content.setLocation(260, 20);
 		}
 		this.add(sender);
+	}
+	
+	public void setImageObserver(JList list, int index){
+		if(imageIcon != null)
+			imageIcon.setImageObserver(new AnimatedObserver(list, index));
 	}
 
 	class AnimatedObserver implements ImageObserver
 	{
-		JLabel label;
+		JList list;
+		int index;
 
-		public AnimatedObserver(JLabel label) {
-			this.label = label;
+		public AnimatedObserver(JList list, int index) {
+			this.list = list;
+			this.index = index;
 		} 
 
 		public boolean imageUpdate (Image img, int infoflags, int x, int y, int width, int height) {
 			if ((infoflags & (FRAMEBITS|ALLBITS)) != 0) {
-				Rectangle rect = label.getBounds();
-				label.repaint(rect);
+				Rectangle rect = list.getCellBounds(index, index);
+				list.repaint(rect);
 			}
 			return (infoflags & (ALLBITS|ABORT)) == 0;
 		}
