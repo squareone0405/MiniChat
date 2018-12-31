@@ -11,10 +11,18 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.text.ComponentView;
@@ -29,16 +37,25 @@ import javax.swing.text.*;
 import util.*;
 
 public class MessagePanel extends JPanel {
-	private final static BufferedImage corruptImg = getCorruptImg();
+	private final static ImageIcon corruptImg = getCorruptImg();
 	private final static ImageIcon fileImg = getFileImg();
-	private static BufferedImage getCorruptImg(){
+	private final static ImageIcon audioImg = getAudioImg();
+	private static String userName;
+	
+	public static void setUserName(String userName){
+		MessagePanel.userName = userName;
+	}
+	
+	private static ImageIcon getCorruptImg(){
 		BufferedImage bi = null;
 		try {
 			bi = ImageIO.read(new File(Config.FileCorruptPath));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return bi;
+		Image img = bi.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+		ImageIcon imageIcon = new ImageIcon(img);
+		return imageIcon;
 	}
 	private static ImageIcon getFileImg(){
 		BufferedImage bi = null;
@@ -51,51 +68,69 @@ public class MessagePanel extends JPanel {
 		ImageIcon imageIcon = new ImageIcon(img);
 		return imageIcon;
 	}
+	private static ImageIcon getAudioImg(){
+		BufferedImage bi = null;
+		try {
+			bi = ImageIO.read(new File(Config.PlayRecordPath));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Image img = bi.getScaledInstance(25, 25, Image.SCALE_SMOOTH);
+		ImageIcon imageIcon = new ImageIcon(img);
+		return imageIcon;
+	}
 	
 	private ImageIcon imageIcon;
+	private Message msg;
 	
 	public MessagePanel(Message msg){
 		super();
-		JLabel sender = new JLabel(msg.friendId + ":" + "(" + msg.time + ")");
+		this.msg = msg;
+		JLabel sender = new JLabel();
+		if(msg.isUser)
+			sender.setText(userName + ":" + "(" + msg.time + ")" );
+		else 
+			sender.setText(msg.friendId + ":" + "(" + msg.time + ")");
 		sender.setFont(new Font("times new roman", Font.PLAIN, 15));
 		sender.setBounds(0, 0, 560, 20);
-		JTextPane content = null;
+		JTextPane textPane = null;
 		JLabel imgLabel = null;
 		BufferedImage bufferdImg = null;
 		imageIcon = null;
-		Box fileBox = null;
+		Box box = null;
 		this.setLayout(null);
 		switch(msg.type){
 		case Text:
-			content = new JTextPane();
-			content.setBounds(0, 20, 300, 20);
-			content.setEditorKit(new WrapEditorKit());
-			content.setText(msg.content);
-			content.setOpaque(true);
-			content.setEditable(false);
-			content.setFocusable(false);
-			content.setBackground(new Color(220, 220, 220));
-			content.setFont(new Font("微软雅黑", Font.PLAIN, 15));
-			content.setLocation(0, 20);
-			content.setSize(300, 40);
-			content.setSize(300, content.getPreferredSize().height);
-		    this.add(content);
-		    this.setPreferredSize(new Dimension(560, content.getHeight() + 30));
+			textPane = new JTextPane();
+			textPane.setBounds(0, 20, 300, 20);
+			textPane.setEditorKit(new WrapEditorKit());
+			textPane.setText(msg.content);
+			textPane.setOpaque(true);
+			textPane.setEditable(false);
+			textPane.setFocusable(false);
+			textPane.setBackground(new Color(220, 220, 220));
+			textPane.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 15));
+			textPane.setLocation(0, 20);
+			textPane.setSize(300, 40);
+			textPane.setSize(300, textPane.getPreferredSize().height);
+		    this.add(textPane);
+		    this.setPreferredSize(new Dimension(560, textPane.getHeight() + 30));
 		    break;
 		case File:
-			fileBox = Box.createHorizontalBox();
-			fileBox.setBounds(0, 20, 300, 100);
-			JLabel fileLabel = new JLabel(fileImg);
-			JLabel nameLabel = new JLabel(msg.content);
-			nameLabel.setFont(new Font("华文宋体", Font.PLAIN, 15));
-			nameLabel.setAutoscrolls(true);
-			fileBox.add(fileLabel);
-			fileBox.add(nameLabel);
-		    this.add(fileBox);
-		    this.setPreferredSize(new Dimension(560,fileBox.getHeight() + 10));
+			box = Box.createHorizontalBox();
+			box.setBounds(0, 20, 300, 50);
+			JLabel fileImageLabel = new JLabel(fileImg);
+			JLabel fileNameLabel = new JLabel(msg.content);
+			fileNameLabel.setFont(new Font("华文宋体", Font.BOLD, 15));
+			fileNameLabel.setAutoscrolls(true);
+			box.add(fileImageLabel);
+			box.add(fileNameLabel);
+		    this.add(box);
+		    this.setPreferredSize(new Dimension(560,box.getHeight() + 20));
 		    break;
 		case Image:
 			imgLabel = new JLabel();
+			boolean isCorrupt = false;
 			String imgPath = null;
 			if(msg.isUser)
 				imgPath = msg.content;
@@ -104,21 +139,48 @@ public class MessagePanel extends JPanel {
 			try {
 			    bufferdImg = ImageIO.read(new File(imgPath));
 			} catch (IOException e) {
-				bufferdImg = corruptImg;
+				System.out.println("image corrupt");
+				isCorrupt = true;
 			}
-			int width = bufferdImg.getWidth();
-			int height = bufferdImg.getHeight();
-			if(width > 200){
-				height = (int)(height * 200.0 / width);
-				width = 200;
+			if(!isCorrupt){
+				int width = bufferdImg.getWidth();
+				int height = bufferdImg.getHeight();
+				if(width > 200){
+					height = (int)(height * 200.0 / width);
+					width = 200;
+				}
+				Image img = bufferdImg.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+				imageIcon = new ImageIcon(img);
+				imgLabel.setBounds(0, 20, width, height);
+				imgLabel.setHorizontalAlignment(JLabel.CENTER);
+				imgLabel.setIcon(imageIcon);
+				this.add(imgLabel);
+				this.setPreferredSize(new Dimension(560, imgLabel.getHeight() + 30));
 			}
-			Image img = bufferdImg.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-			imageIcon = new ImageIcon(img);
-			imgLabel.setBounds(0, 20, width, height);
-			imgLabel.setHorizontalAlignment(JLabel.CENTER);
-			imgLabel.setIcon(imageIcon);
-			this.add(imgLabel);
-			this.setPreferredSize(new Dimension(560,imgLabel.getHeight() + 30));
+			else {
+				box = Box.createHorizontalBox();
+				box.setBounds(0, 20, 300, 50);
+				JLabel corruptImageLabel = new JLabel(corruptImg);
+				JLabel imageNameLabel = new JLabel("图片文件损坏：" + msg.content);
+				imageNameLabel.setFont(new Font("华文宋体", Font.BOLD, 15));
+				imageNameLabel.setAutoscrolls(true);
+				box.add(corruptImageLabel);
+				box.add(imageNameLabel);
+			    this.add(box);
+			    this.setPreferredSize(new Dimension(560,box.getHeight() + 20));
+			    break;
+			}
+			break;
+		case Audio:
+			box = Box.createHorizontalBox();
+			box.setBounds(0, 20, 300, 50);
+			JLabel audioImgLabel = new JLabel(audioImg);
+			audioImgLabel.setHorizontalAlignment(JLabel.RIGHT);
+			audioImgLabel.setPreferredSize(new Dimension(40, 40));
+			box.add(audioImgLabel);
+			this.add(box);
+			this.setPreferredSize(new Dimension(560,box.getHeight() + 10));
+		    break;
 		default:
 		    break;
 		}
@@ -126,12 +188,50 @@ public class MessagePanel extends JPanel {
 			sender.setHorizontalAlignment(JLabel.RIGHT);
 			if(imgLabel != null)
 				imgLabel.setLocation(560 - imgLabel.getWidth(), 20);
-			if(fileBox != null)
-				fileBox.setLocation(260, 20);
-			if(content != null)
-				content.setLocation(260, 20);
+			if(box != null)
+				box.setLocation(260, 20);
+			if(textPane != null)
+				textPane.setLocation(260, 20);
 		}
 		this.add(sender);
+	}
+	
+	public void handelClick(){
+		System.out.println("clicked");
+		if(msg.type == MessageType.Audio){
+			File wavFile = new File(Config.ChatFilePath + msg.content);
+			if(wavFile.length() == 0) {
+				JOptionPane.showMessageDialog(this, "语音文件损坏", "Waring",  
+						JOptionPane.WARNING_MESSAGE);
+					return;
+			}
+			AudioInputStream stream = null;
+		    AudioFormat format;
+		    DataLine.Info info;
+		    Clip clip = null;
+		    try {
+				stream = AudioSystem.getAudioInputStream(wavFile);
+			} catch (UnsupportedAudioFileException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		    format = stream.getFormat();
+		    info = new DataLine.Info(Clip.class, format);
+		    try {
+				clip = (Clip) AudioSystem.getLine(info);
+			} catch (LineUnavailableException e) {
+				e.printStackTrace();
+			}
+		    try {
+				clip.open(stream);
+			} catch (LineUnavailableException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		    clip.start();
+		}
 	}
 	
 	public void setImageObserver(JList list, int index){

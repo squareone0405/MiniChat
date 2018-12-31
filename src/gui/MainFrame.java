@@ -7,14 +7,13 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 
 import javax.imageio.ImageIO;
-import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -47,7 +46,8 @@ public class MainFrame extends JFrame{
 	private JTextPane paneMsg;
 	private JScrollPane spMsg;
 	
-	private EmojiFrame emojiFrame;
+	private EmojiDialog emojiDialog;
+	private AudioDialog audioDialog;
 	
 	private JPanel optionPanel;
 	private JTextField textNewFriend;
@@ -70,7 +70,6 @@ public class MainFrame extends JFrame{
 	private CentralServerClient csClient;
 	private HashMap<String, Client> clientTable;
 	private boolean isResponsed;
-	private boolean isRecording;
 	
 	public MainFrame(String userName, CentralServerClient csClient) {
 		super("MiniChat");
@@ -82,13 +81,14 @@ public class MainFrame extends JFrame{
 		this.setVisible(true);
 		this.setResizable(false);
 		this.setLocationRelativeTo(null); 
+		Client.setUserName(userName);
+		MessagePanel.setUserName(userName);
 		server = new Server(this);
 		friendList = new ArrayList<String>();
 		ipTable = new HashMap<String, String>();
 		clientTable = new HashMap<String, Client>();
 		messageModelList = new HashMap<String, DefaultListModel<MessagePanel>>();
 		isResponsed = true;
-		isRecording = false;
 		loadAllFormDB();
 	}
 	
@@ -115,12 +115,15 @@ public class MainFrame extends JFrame{
 		contactModel = new DefaultListModel();
 		contactList = new JList(contactModel);
 		contactList.setCellRenderer(new ContactRenderer());
-		contactList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-            	ContactLabel lbl = (ContactLabel) contactList.getSelectedValue();
-            	contactItemClicked(lbl);	
-            }
-        });
+		contactList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent event) {
+				int index = contactList.locationToIndex(event.getPoint());
+				ContactLabel lbl = (ContactLabel) contactList.getModel().getElementAt(index);
+				if(lbl != null)
+            		contactItemClicked(lbl);
+			}
+		});
 		contactList.setFixedCellHeight(40);
 		spContacts = new JScrollPane();
 		spContacts.getViewport().add(contactList);
@@ -129,13 +132,15 @@ public class MainFrame extends JFrame{
 		//for messages
 		messageList = new JList();
 		messageList.setCellRenderer(new MessageRenderer());
-		messageList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-            	MessagePanel msgPnl = (MessagePanel) messageList.getSelectedValue();
-            	if(msgPnl != null)
+		messageList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent event) {
+				int index = messageList.locationToIndex(event.getPoint());
+				MessagePanel msgPnl = (MessagePanel) messageList.getModel().getElementAt(index);
+				if(msgPnl != null)
             		messageItemClicked(msgPnl);
-            }
-        });
+			}
+		});
 		spMessage = new JScrollPane();
 		spMessage.getViewport().add(messageList);		
 		spMessage.setBounds(200, 50, 580, 400);
@@ -198,7 +203,7 @@ public class MainFrame extends JFrame{
 				new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						sendAudio();
+						recordAudio();
 					}
 				}
 				);
@@ -304,7 +309,8 @@ public class MainFrame extends JFrame{
 		this.getContentPane().add(BorderLayout.CENTER, optionPanel);
 		this.getContentPane().add(BorderLayout.CENTER, chatPanel);
 		
-		emojiFrame = new EmojiFrame(paneMsg);
+		emojiDialog = new EmojiDialog(paneMsg);
+		audioDialog = new AudioDialog(this);
 		
 		this.addWindowListener(new WindowAdapter() {  
 			public void windowClosing(WindowEvent e) {  
@@ -353,19 +359,19 @@ public class MainFrame extends JFrame{
 	private void sendMsg() {
 		if(!checkBeforeSend())
 			return;
-		String content = paneMsg.getText();
+		String content = paneMsg.getText();	
+		clientTable.put(currentFriend, new Client(ipTable.get(currentFriend)));
+		if(!clientTable.get(currentFriend).sendMsg(content)){
+			JOptionPane.showMessageDialog(this, "发送失败", "Waring", 
+					JOptionPane.WARNING_MESSAGE);
+			return;
+		}
 		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Text, content);
 		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
 		dbManager.addMessageItem(message);
-		if(clientTable.containsKey(currentFriend)){
-			clientTable.get(currentFriend).sendMsg(content);
-		}
-		else {
-			clientTable.put(currentFriend, new Client(userName, ipTable.get(currentFriend)));
-			clientTable.get(currentFriend).sendMsg(content);
-		}
 		paneMsg.setText("");
+		this.repaint();
 	}
 	
 	private void sendFile(){
@@ -376,17 +382,16 @@ public class MainFrame extends JFrame{
 		File file = fileChooser.getSelectedFile();
 		if(file == null || file.length() == 0)
 			return;
+		clientTable.put(currentFriend, new Client(ipTable.get(currentFriend)));
+		if(!clientTable.get(currentFriend).sendFile(file)){
+			JOptionPane.showMessageDialog(this, "发送失败", "Waring", 
+					JOptionPane.WARNING_MESSAGE);
+			return;
+		}
 		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.File, file.getName());
 		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
 		dbManager.addMessageItem(message);
-		if(clientTable.containsKey(currentFriend)){
-			clientTable.get(currentFriend).sendFile(file);
-		}
-		else {
-			clientTable.put(currentFriend, new Client(userName, ipTable.get(currentFriend)));
-			clientTable.get(currentFriend).sendFile(file);
-		}		
 	}
 	
 	private void sendImage(){
@@ -401,77 +406,39 @@ public class MainFrame extends JFrame{
 		File file = fileChooser.getSelectedFile();
 		if(file == null || file.length() == 0)
 			return;
+		clientTable.put(currentFriend, new Client(ipTable.get(currentFriend)));
+		if(!clientTable.get(currentFriend).sendImage(file)){
+			JOptionPane.showMessageDialog(this, "发送失败", "Waring", 
+					JOptionPane.WARNING_MESSAGE);
+			return;
+		}
 		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Image, file.getAbsolutePath());
 		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
-		dbManager.addMessageItem(message);
-		if(clientTable.containsKey(currentFriend)){
-			clientTable.get(currentFriend).sendImage(file);
-		}
-		else {
-			clientTable.put(currentFriend, new Client(userName, ipTable.get(currentFriend)));
-			clientTable.get(currentFriend).sendImage(file);
-		}		
+		dbManager.addMessageItem(message);	
 	}
 	
 	private void sendEmoji(){
-		emojiFrame.setVisible(true);
+		emojiDialog.setVisible(true);
 	}
 
-	private void sendAudio(){
-		AudioFileFormat.Type fileType = AudioFileFormat.Type.WAVE;
-		TargetDataLine line = null;
-		float sampleRate = 16000;
-        int sampleSizeInBits = 8;
-        int channels = 2;
-        boolean signed = true;
-        boolean bigEndian = true;
-        AudioFormat format = new AudioFormat(sampleRate, sampleSizeInBits,
-                                             channels, signed, bigEndian);
-        DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-        if (!AudioSystem.isLineSupported(info)) {
-            System.out.println("Line not supported");
-            System.exit(0);
-        }
-        try {
-			line = (TargetDataLine) AudioSystem.getLine(info);
-			line.open(format);
-		} catch (LineUnavailableException e) {
-			e.printStackTrace();
-		}
-        ByteArrayOutputStream out  = new ByteArrayOutputStream();
-        int numBytesRead;
-        byte[] data = new byte[line.getBufferSize() / 5];
-        line.start();
-        /*for(int i = 0; i < 100; ++i){
-        	numBytesRead =  line.read(data, 0, data.length);
-            // Save this chunk of data.
-            out.write(data, 0, numBytesRead);
-        }*/
-        System.out.println("Start capturing...");
-        AudioInputStream ais = new AudioInputStream(line);
-        System.out.println("Start recording...");
-        File wavFile = new File("F:/WorkSpace/RecordAudio.wav");
-        try {
-			AudioSystem.write(ais, fileType, wavFile);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-        Thread stopper = new Thread(new Runnable() {
-            public void run() {
-                while(isRecording){
-                	continue;
-                }
-                doneRecord();
-            }
-        });
-        stopper.start();
-		if(!checkBeforeSend())
-			return;
+	private void recordAudio(){
+		audioDialog.setVisible(true);
 	}
 	
-	private void doneRecord(){
-		
+	public void sendAudio(File wavFile){
+		if(!checkBeforeSend())
+			return;
+		clientTable.put(currentFriend, new Client(ipTable.get(currentFriend)));
+		if(!clientTable.get(currentFriend).sendAudio(wavFile)){
+			JOptionPane.showMessageDialog(this, "发送失败", "Waring", 
+					JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Audio, wavFile.getName());
+		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
+		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
+		dbManager.addMessageItem(message);	
 	}
 	
 	private boolean checkBeforeSend(){
@@ -532,12 +499,14 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void contactItemClicked(ContactLabel contactLabel){
+		contactLabel.handelClick();
+		this.repaint();
 		String id = contactLabel.getId();
 		setCurrnetFriend(id);
 	}
 	
 	private void messageItemClicked(MessagePanel msgPanel){
-		System.out.println(msgPanel.toString());
+		msgPanel.handelClick();
 	}
 	
 	private void setCurrnetFriend(String id){
@@ -552,16 +521,24 @@ public class MainFrame extends JFrame{
 		if(!messageModelList.containsKey(id)){
 			messageModelList.put(id, new DefaultListModel<MessagePanel>());
 			this.contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(id, true)));
+			dbManager.addContactsItem(id);
 		}
-		/*Iterator<Entry<String, DefaultListModel<MessagePanel>>> it = messageModelList.entrySet().iterator();
-	    while (it.hasNext()) {
-	    	Entry<String, DefaultListModel<MessagePanel>> pair = (Entry<String, DefaultListModel<MessagePanel>>)it.next();
-	    	System.out.println(pair.getKey());
-	    }*/
 		dbManager.addMessageItem(msg);
 		messageModelList.get(id).addElement(new MessagePanel(msg));
-		messageList.setModel(messageModelList.get(id));
-		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
+		if(currentFriend.equals(id)){
+			messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
+		}
+		else{
+			Enumeration<ContactLabel> enu = contactModel.elements();
+			while (enu.hasMoreElements()) {
+				ContactLabel label = enu.nextElement();
+				if(label.getId().equals(id)){
+					label.addUnread();
+					this.repaint();
+					break;
+				}
+		    }
+		}
 	}
 	
 	public void recieveOnlineResponse(String id, String ip){
@@ -582,6 +559,7 @@ public class MainFrame extends JFrame{
 				if(label.getId().equals(id)){
 					label.setOnline(isOnline);
 					this.repaint();
+					break;
 				}		
 		    }
 		}

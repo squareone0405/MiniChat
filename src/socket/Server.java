@@ -152,6 +152,25 @@ public class Server {
 						message.type = MessageType.File;
 						message.content = fileName;
 					}
+					else if(type.equals(Config.AudioPrefix)){
+						System.out.println("audio**************");
+						String fileName = dis.readUTF();		    
+						byte[] fileBuffer = new byte[length];
+						File dir = new File(Config.ChatFilePath);
+					    if (!dir.exists())
+					    	dir.mkdir();
+						FileOutputStream output = new FileOutputStream(new File(dir, fileName));
+				        int size = length;
+				        int bytesRead;
+				        while (size > 0 && (bytesRead = dis.read(fileBuffer, 0, (int)Math.min(fileBuffer.length, size))) != -1){
+						    output.write(fileBuffer, 0, bytesRead);
+						    size -= bytesRead;
+						    System.out.println(bytesRead);
+						}
+				        output.close();
+						message.type = MessageType.Audio;
+						message.content = fileName;
+					}
 					mf.recieveMsg(message);
 				} catch (IOException e) {
 					//JOptionPane.showMessageDialog(null, "Á¬½Ó¶Ï¿ª", "Info", JOptionPane.INFORMATION_MESSAGE);

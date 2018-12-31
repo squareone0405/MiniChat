@@ -9,10 +9,13 @@ import javafx.util.Pair;
 public class ContactLabel extends JLabel {
 	private String id;
 	private boolean isOnline;
+	private int unread;
 	
 	public ContactLabel(Pair<String, Boolean> content){
 		super();
+		this.setFont(new Font("微软雅黑", Font.BOLD, 13));
 		this.id = content.getKey();
+		unread = 0;
 		this.setOnline(content.getValue());
 		this.setHorizontalAlignment(SwingConstants.CENTER);
 		this.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -21,10 +24,24 @@ public class ContactLabel extends JLabel {
 	
 	public void setOnline(boolean isOnline){
 		this.isOnline = isOnline;
+		String unreadStr = "";
+		if(unread > 0){
+			unreadStr = "（" + String.valueOf(unread) + "）";
+		}
 		if(isOnline)
-			this.setText(id + "【在线】");
+			this.setText(id + "【在线】" + unreadStr);
 		else
-			this.setText(id + "【离线】");
+			this.setText(id + "【离线】" + unreadStr);
+	}
+	
+	public void addUnread(){
+		unread++;
+		setOnline(this.isOnline);
+	}
+	
+	public void handelClick(){
+		unread = 0;
+		setOnline(this.isOnline);
 	}
 	
 	public String getId(){

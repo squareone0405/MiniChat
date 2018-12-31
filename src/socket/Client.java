@@ -16,11 +16,14 @@ public class Client {
 	private Socket socket;
 	DataOutputStream dos;
 	private boolean isConnected;
-	private String id;
+	private static String userName;
 	
-	public Client(String id, String ip){
-		this.id = id;
+	public Client(String ip){
 		connectServer(ip, Config.LocalServerPort);
+	}
+	
+	public static void setUserName(String userName){
+		Client.userName = userName;
 	}
 	
 	public boolean connectServer(String ip, int port){
@@ -28,7 +31,8 @@ public class Client {
 			return true;
 		}
 		try {
-			socket = new Socket(ip, port);
+			socket = new Socket();
+			socket.connect(new InetSocketAddress(ip, port), Config.TimeoutMs);
 			isConnected = true;
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, "无法连接该好友！", "Warning",
@@ -46,7 +50,7 @@ public class Client {
 	public boolean sendMsg(String message) {  
 		if(isConnected){
 			try {
-				dos.writeUTF(id);
+				dos.writeUTF(userName);
 				dos.writeUTF(Config.TextPrefix);
 				dos.writeInt(message.length());
 				dos.writeUTF(message);
@@ -76,7 +80,7 @@ public class Client {
 				e.printStackTrace();
 			}
 			try {
-				dos.writeUTF(id);
+				dos.writeUTF(userName);
 				dos.writeUTF(Config.ImagePrefix);
 				dos.writeInt((int) file.length());
 				dos.writeUTF(file.getName());
@@ -107,8 +111,39 @@ public class Client {
 				e.printStackTrace();
 			}
 			try {
-				dos.writeUTF(id);
+				dos.writeUTF(userName);
 				dos.writeUTF(Config.FilePrefix);
+				dos.writeInt((int) file.length());
+				dos.writeUTF(file.getName());
+				dos.write(byteArray);
+				dos.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return true;
+		}
+		else
+			return false;
+	}
+	
+	public boolean sendAudio(File file) {  
+		if(isConnected){
+			FileInputStream fis = null;
+			try {
+				fis = new FileInputStream(file);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+	        BufferedInputStream bis = new BufferedInputStream(fis);
+	        byte[] byteArray = new byte[(int) file.length()];
+	        try {
+				bis.read(byteArray, 0, byteArray.length);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			try {
+				dos.writeUTF(userName);
+				dos.writeUTF(Config.AudioPrefix);
 				dos.writeInt((int) file.length());
 				dos.writeUTF(file.getName());
 				dos.write(byteArray);
