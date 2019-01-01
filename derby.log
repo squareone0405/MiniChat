@@ -1,7 +1,7 @@
 ----------------------------------------------------------------
-Mon Dec 31 18:20:57 CST 2018:
+Wed Jan 02 00:49:58 CST 2019:
 正在使用类加载程序 sun.misc.Launcher$AppClassLoader@73d16e93 引导数据库
-目录 F:\WorkSpace\Java\MiniChat\2016011495 中的 Derby 版本 The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579) 实例 a816c00e-0168-03c7-de8d-00000984d630
+目录 F:\WorkSpace\Java\MiniChat\2016011516 中的 Derby 版本 The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579) 实例 a816c00e-0168-0a52-6441-000009853438
 已从 file:/D:/Developer/sql_java/db-derby-10.14.2.0-bin/lib/derby.jar 加载
 java.vendor=Oracle Corporation
 java.runtime.version=1.8.0_131-b11
@@ -12,8 +12,8 @@ os.version=10.0
 derby.system.home=null
 数据库类加载程序已启动 - derby.database.classpath=''
 ----------------------------------------------------------------
-Mon Dec 31 18:22:43 CST 2018：正在关闭 Derby 引擎
+Wed Jan 02 00:52:38 CST 2019：正在关闭 Derby 引擎
 ----------------------------------------------------------------
-Mon Dec 31 18:22:43 CST 2018:
-正在使用类加载程序 sun.misc.Launcher$AppClassLoader@73d16e93 关闭数据库目录 F:\WorkSpace\Java\MiniChat\2016011495 上的实例 a816c00e-0168-03c7-de8d-00000984d630
+Wed Jan 02 00:52:39 CST 2019:
+正在使用类加载程序 sun.misc.Launcher$AppClassLoader@73d16e93 关闭数据库目录 F:\WorkSpace\Java\MiniChat\2016011516 上的实例 a816c00e-0168-0a52-6441-000009853438
 ----------------------------------------------------------------

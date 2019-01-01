@@ -20,6 +20,7 @@ public class Config {
 	public final static String EmojiPrefix = "emj@";
 	public final static String FilePrefix = "fil@";
 	public final static String AudioPrefix = "aud@";
+	public final static String GroupPrefix = "grp@";
 	
 	public final static String SendImagePath = "imgs/image.png";
 	public final static String SendFilePath = "imgs/file.png";
@@ -33,6 +34,7 @@ public class Config {
 	public final static String StartRecordPath = "imgs/start.png";
 	public final static String StopRecordPath = "imgs/stop.png";
 	public final static String PlayRecordPath = "imgs/listen.png";
+	public final static String AddGroupPath = "imgs/addgroup.png";
 	public final static String ChatFilePath = "chatfile/";
 	
 	public final static int TimeoutMs = 2000;

@@ -4,6 +4,7 @@ import java.io.*;
 
 import java.net.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -15,10 +16,11 @@ import util.*;
 public class Client {
 	private Socket socket;
 	DataOutputStream dos;
-	private boolean isConnected;
+	private String ip;
 	private static String userName;
 	
 	public Client(String ip){
+		this.ip = ip;
 		connectServer(ip, Config.LocalServerPort);
 	}
 	
@@ -27,13 +29,9 @@ public class Client {
 	}
 	
 	public boolean connectServer(String ip, int port){
-		if(isConnected) {
-			return true;
-		}
 		try {
 			socket = new Socket();
 			socket.connect(new InetSocketAddress(ip, port), Config.TimeoutMs);
-			isConnected = true;
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, "无法连接该好友！", "Warning",
                     JOptionPane.WARNING_MESSAGE);
@@ -47,16 +45,22 @@ public class Client {
 		return true;
 	}
 	
-	public boolean sendMsg(String message) {  
-		if(isConnected){
+	public String getIp(){
+		return ip;
+	}
+	
+	public boolean sendMsg(String message, String reciever) {  
+		if(socket.isConnected()){
 			try {
 				dos.writeUTF(userName);
+				dos.writeUTF(reciever);
 				dos.writeUTF(Config.TextPrefix);
 				dos.writeInt(message.length());
 				dos.writeUTF(message);
 				dos.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
+				return false;
 			}
 			return true;
 		}
@@ -64,8 +68,8 @@ public class Client {
 			return false;
 	}
 	
-	public boolean sendImage(File file) {  
-		if(isConnected){
+	public boolean sendImage(File file, String reciever) {  
+		if(socket.isConnected()){
 			FileInputStream fis = null;
 			try {
 				fis = new FileInputStream(file);
@@ -81,6 +85,7 @@ public class Client {
 			}
 			try {
 				dos.writeUTF(userName);
+				dos.writeUTF(reciever);
 				dos.writeUTF(Config.ImagePrefix);
 				dos.writeInt((int) file.length());
 				dos.writeUTF(file.getName());
@@ -88,6 +93,7 @@ public class Client {
 				dos.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
+				return false;
 			}
 			return true;
 		}
@@ -95,8 +101,8 @@ public class Client {
 			return false;
 	}
 	
-	public boolean sendFile(File file) {  
-		if(isConnected){
+	public boolean sendFile(File file, String reciever) {  
+		if(socket.isConnected()){
 			FileInputStream fis = null;
 			try {
 				fis = new FileInputStream(file);
@@ -112,6 +118,7 @@ public class Client {
 			}
 			try {
 				dos.writeUTF(userName);
+				dos.writeUTF(reciever);
 				dos.writeUTF(Config.FilePrefix);
 				dos.writeInt((int) file.length());
 				dos.writeUTF(file.getName());
@@ -119,6 +126,7 @@ public class Client {
 				dos.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
+				return false;
 			}
 			return true;
 		}
@@ -126,8 +134,8 @@ public class Client {
 			return false;
 	}
 	
-	public boolean sendAudio(File file) {  
-		if(isConnected){
+	public boolean sendAudio(File file, String reciever) {  
+		if(socket.isConnected()){
 			FileInputStream fis = null;
 			try {
 				fis = new FileInputStream(file);
@@ -143,6 +151,7 @@ public class Client {
 			}
 			try {
 				dos.writeUTF(userName);
+				dos.writeUTF(reciever);
 				dos.writeUTF(Config.AudioPrefix);
 				dos.writeInt((int) file.length());
 				dos.writeUTF(file.getName());
@@ -150,6 +159,26 @@ public class Client {
 				dos.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
+				return false;
+			}
+			return true;
+		}
+		else
+			return false;
+	}
+	
+	public boolean sendGroupMsg(String groupStr) {  
+		if(socket.isConnected()){
+			try {
+				dos.writeUTF(userName);
+				dos.writeUTF("@");
+				dos.writeUTF(Config.GroupPrefix);
+				dos.writeInt(0);
+				dos.writeUTF(groupStr);
+				dos.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
 			}
 			return true;
 		}
@@ -161,12 +190,10 @@ public class Client {
 		try {
 			if (socket != null) {  
 				socket.close();  
-			}  
-			isConnected = false;  
+			}   
 			return true;  
 		} catch (IOException e) {  
-			e.printStackTrace();
-			isConnected = true;  
+			e.printStackTrace(); 
 			return false;  
 		}  
 	}

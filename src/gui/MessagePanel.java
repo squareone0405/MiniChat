@@ -40,11 +40,6 @@ public class MessagePanel extends JPanel {
 	private final static ImageIcon corruptImg = getCorruptImg();
 	private final static ImageIcon fileImg = getFileImg();
 	private final static ImageIcon audioImg = getAudioImg();
-	private static String userName;
-	
-	public static void setUserName(String userName){
-		MessagePanel.userName = userName;
-	}
 	
 	private static ImageIcon getCorruptImg(){
 		BufferedImage bi = null;
@@ -87,10 +82,7 @@ public class MessagePanel extends JPanel {
 		super();
 		this.msg = msg;
 		JLabel sender = new JLabel();
-		if(msg.isUser)
-			sender.setText(userName + ":" + "(" + msg.time + ")" );
-		else 
-			sender.setText(msg.friendId + ":" + "(" + msg.time + ")");
+		sender.setText(msg.sender + ":" + "(" + msg.time + ")");
 		sender.setFont(new Font("times new roman", Font.PLAIN, 15));
 		sender.setBounds(0, 0, 560, 20);
 		JTextPane textPane = null;

@@ -10,11 +10,15 @@ public class ContactLabel extends JLabel {
 	private String id;
 	private boolean isOnline;
 	private int unread;
+	private boolean isGroup;
 	
 	public ContactLabel(Pair<String, Boolean> content){
 		super();
 		this.setFont(new Font("微软雅黑", Font.BOLD, 13));
 		this.id = content.getKey();
+		isGroup = false;
+		if(id.contains(","))
+			isGroup = true;
 		unread = 0;
 		this.setOnline(content.getValue());
 		this.setHorizontalAlignment(SwingConstants.CENTER);
@@ -28,10 +32,18 @@ public class ContactLabel extends JLabel {
 		if(unread > 0){
 			unreadStr = "（" + String.valueOf(unread) + "）";
 		}
-		if(isOnline)
-			this.setText(id + "【在线】" + unreadStr);
-		else
-			this.setText(id + "【离线】" + unreadStr);
+		String statusStr = "";
+		if(!isGroup){
+			if(isOnline)
+				statusStr = "【在线】";
+			else
+				statusStr = "【离线】";
+		}
+		this.setText(unreadStr + id + statusStr);
+	}
+	
+	public boolean isGroup(){
+		return isGroup;
 	}
 	
 	public void addUnread(){

@@ -18,8 +18,11 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 
 import javafx.util.Pair;
@@ -55,7 +58,6 @@ public class MainFrame extends JFrame{
 	private JButton btnRefresh;
 	private JButton btnAddGroup;
 	private JButton btnDeleteFriend;
-	private JButton btnClearHistory;
 	private JLabel lblCurrentChat;
 	
 	private DatabaseManager dbManager;
@@ -64,7 +66,7 @@ public class MainFrame extends JFrame{
 	private ArrayList<String> friendList;
 	private String userName;
 	private HashMap<String, String> ipTable;
-	private ArrayList<String> idToBeCheck;
+	private HashMap<String, Boolean> idToBeCheck;
 	
 	private Server server;
 	private CentralServerClient csClient;
@@ -82,29 +84,31 @@ public class MainFrame extends JFrame{
 		this.setResizable(false);
 		this.setLocationRelativeTo(null); 
 		Client.setUserName(userName);
-		MessagePanel.setUserName(userName);
+		Message.setUserName(userName);
 		server = new Server(this);
 		friendList = new ArrayList<String>();
 		ipTable = new HashMap<String, String>();
 		clientTable = new HashMap<String, Client>();
 		messageModelList = new HashMap<String, DefaultListModel<MessagePanel>>();
 		isResponsed = true;
+		currentFriend = "";
 		loadAllFormDB();
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void initComponent(){
-		Font font = new Font("微软雅黑", Font.BOLD, 15);
+		Font fontBtn = new Font("微软雅黑", Font.BOLD, 15);
+		Font fontLbl = new Font("微软雅黑", Font.BOLD, 15);
 		Font fontMsg = new Font("Segoe UI Emoji", Font.PLAIN, 18);
 		Font fontAdd = new Font("微软雅黑", Font.PLAIN, 16);
 		Color myLightGray = new Color(240,240,240);
 		Color myGray = new Color(200,200,200);
-		UIManager.put("Button.font", font);
+		UIManager.put("Button.font", fontBtn);
 		UIManager.put("Button.background", myGray);
 		UIManager.put("Button.border", new Color(0, 0, 0));
 		UIManager.put("TextPane.font", fontMsg);
 		UIManager.put("TextField.font", fontAdd);
-		UIManager.put("Label.font", font);
+		UIManager.put("Label.font", fontLbl);
 		UIManager.put("List.background", myLightGray);
 		UIManager.put("Panel.background", myLightGray);
 		
@@ -241,10 +245,9 @@ public class MainFrame extends JFrame{
 		btnRefresh.setIcon(new ImageIcon(tempRefresh));
 		btnRefresh.setOpaque(false);
 		btnAddGroup = new JButton("添加群聊");
-		btnDeleteFriend = new JButton("删除好友");
-		btnClearHistory = new JButton("清空聊天记录");
+		btnDeleteFriend = new JButton("删除聊天");
 		lblCurrentChat = new JLabel();
-		lblCurrentChat.setFont(new Font("华文宋体", Font.BOLD, 22));
+		lblCurrentChat.setFont(new Font("华文宋体", Font.BOLD, 20));
 		lblCurrentChat.setHorizontalAlignment(JLabel.RIGHT);
 		lblCurrentChat.setOpaque(true);
 		btnAddFriend.addActionListener(
@@ -279,21 +282,12 @@ public class MainFrame extends JFrame{
 					}
 				}
 				);
-		btnClearHistory.addActionListener(
-				new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						clearHistory();
-					}
-				}
-				);
 		textNewFriend.setBounds(10, 10, 110, 30);
 		btnAddFriend.setBounds(130, 10, 70, 30);
 		btnRefresh.setBounds(210, 10, 30, 30);
 		btnAddGroup.setBounds(250, 10, 80, 30);
 		btnDeleteFriend.setBounds(350, 10, 80, 30);
-		btnClearHistory.setBounds(450, 10, 100, 30);
-		lblCurrentChat.setBounds(650, 10, 120, 30);
+		lblCurrentChat.setBounds(450, 10, 320, 30);
 		optionPanel.setBounds(0, 0, 790, 50);
 		optionPanel.setLayout(null);
 		optionPanel.add(textNewFriend);
@@ -301,7 +295,6 @@ public class MainFrame extends JFrame{
 		optionPanel.add(btnAddFriend);
 		optionPanel.add(btnAddGroup);
 		optionPanel.add(btnDeleteFriend);
-		optionPanel.add(btnClearHistory);
 		optionPanel.add(lblCurrentChat);
 		
 		this.getContentPane().add(BorderLayout.CENTER, spContacts);
@@ -325,7 +318,8 @@ public class MainFrame extends JFrame{
 		updateOnline();
 		loadHistory();
 		if(friendList.size() > 0){
-			contactItemClicked(contactModel.getElementAt(0));
+			String id = contactModel.getElementAt(0).getId();
+			setCurrnetFriend(id);
 		}
 	}
 	
@@ -348,25 +342,37 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void updateOnline(){
-		idToBeCheck = new ArrayList<String>();
+		idToBeCheck = new HashMap<String, Boolean>();
 		for(String id:friendList){
-			idToBeCheck.add(id);
+			String[] tempArray = id.split(",");
+			for(int i = 0; i < tempArray.length; ++i){
+				idToBeCheck.put(tempArray[i], tempArray.length == 1);
+			}
 		}
 		if(idToBeCheck.size() > 0)
-			csClient.checkOnline(idToBeCheck.get(0));
+			csClient.checkOnline(idToBeCheck.keySet().iterator().next());
 	}
 
 	private void sendMsg() {
-		if(!checkBeforeSend())
-			return;
-		String content = paneMsg.getText();	
-		clientTable.put(currentFriend, new Client(ipTable.get(currentFriend)));
-		if(!clientTable.get(currentFriend).sendMsg(content)){
-			JOptionPane.showMessageDialog(this, "发送失败", "Waring", 
-					JOptionPane.WARNING_MESSAGE);
-			return;
+		String content = paneMsg.getText();
+		String[] toSend = currentFriend.split(",");
+		for(int i = 0; i < toSend.length; ++i){
+			if(toSend[i].equals(userName))
+				continue;
+			if(!checkBeforeSend(toSend[i])){
+				JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				continue;
+			}
+			if(!clientTable.containsKey(toSend[i]) || !ipTable.get(toSend[i]).equals(clientTable.get(toSend[i]).getIp()))
+				clientTable.put(toSend[i], new Client(ipTable.get(toSend[i])));
+			if(!clientTable.get(toSend[i]).sendMsg(content, currentFriend)){
+				JOptionPane.showMessageDialog(this, toSend[i] + "发送失败", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				continue;
+			}
 		}
-		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Text, content);
+		Message message = new Message(userName, currentFriend, Tools.getCurentTime(), MessageType.Text, content);
 		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
 		dbManager.addMessageItem(message);
@@ -375,28 +381,36 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void sendFile(){
-		if(!checkBeforeSend())
-			return;
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.showOpenDialog(this);
 		File file = fileChooser.getSelectedFile();
 		if(file == null || file.length() == 0)
 			return;
-		clientTable.put(currentFriend, new Client(ipTable.get(currentFriend)));
-		if(!clientTable.get(currentFriend).sendFile(file)){
-			JOptionPane.showMessageDialog(this, "发送失败", "Waring", 
-					JOptionPane.WARNING_MESSAGE);
-			return;
+		String[] toSend = currentFriend.split(",");
+		for(int i = 0; i < toSend.length; ++i){
+			if(toSend[i].equals(userName))
+				continue;
+			if(!checkBeforeSend(toSend[i])){
+				JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				continue;
+			}
+			if(!clientTable.containsKey(toSend[i]) || !ipTable.get(toSend[i]).equals(clientTable.get(toSend[i]).getIp()))
+				clientTable.put(toSend[i], new Client(ipTable.get(toSend[i])));
+			if(!clientTable.get(toSend[i]).sendFile(file, currentFriend)){
+				JOptionPane.showMessageDialog(this, toSend[i] + "发送失败", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				continue;
+			}
 		}
-		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.File, file.getName());
+		Message message = new Message(userName, currentFriend, Tools.getCurentTime(), MessageType.File, file.getName());
 		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
 		dbManager.addMessageItem(message);
+		this.repaint();
 	}
 	
 	private void sendImage(){
-		if(!checkBeforeSend())
-			return;
 		JFileChooser fileChooser = new JFileChooser();
 		FileNameExtensionFilter imageFilter = new FileNameExtensionFilter(
 			    "Image files", ImageIO.getReaderFileSuffixes());
@@ -406,16 +420,28 @@ public class MainFrame extends JFrame{
 		File file = fileChooser.getSelectedFile();
 		if(file == null || file.length() == 0)
 			return;
-		clientTable.put(currentFriend, new Client(ipTable.get(currentFriend)));
-		if(!clientTable.get(currentFriend).sendImage(file)){
-			JOptionPane.showMessageDialog(this, "发送失败", "Waring", 
-					JOptionPane.WARNING_MESSAGE);
-			return;
+		String[] toSend = currentFriend.split(",");
+		for(int i = 0; i < toSend.length; ++i){
+			if(toSend[i].equals(userName))
+				continue;
+			if(!checkBeforeSend(toSend[i])){
+				JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				continue;
+			}
+			if(!clientTable.containsKey(toSend[i]) || !ipTable.get(toSend[i]).equals(clientTable.get(toSend[i]).getIp()))
+				clientTable.put(toSend[i], new Client(ipTable.get(toSend[i])));
+			if(!clientTable.get(toSend[i]).sendImage(file, currentFriend)){
+				JOptionPane.showMessageDialog(this, toSend[i] + "发送失败", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				continue;
+			}
 		}
-		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Image, file.getAbsolutePath());
+		Message message = new Message(userName, currentFriend, Tools.getCurentTime(), MessageType.Image, file.getAbsolutePath());
 		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
 		dbManager.addMessageItem(message);	
+		this.repaint();
 	}
 	
 	private void sendEmoji(){
@@ -427,31 +453,90 @@ public class MainFrame extends JFrame{
 	}
 	
 	public void sendAudio(File wavFile){
-		if(!checkBeforeSend())
-			return;
-		clientTable.put(currentFriend, new Client(ipTable.get(currentFriend)));
-		if(!clientTable.get(currentFriend).sendAudio(wavFile)){
-			JOptionPane.showMessageDialog(this, "发送失败", "Waring", 
-					JOptionPane.WARNING_MESSAGE);
-			return;
+		String[] toSend = currentFriend.split(",");
+		for(int i = 0; i < toSend.length; ++i){
+			if(toSend[i].equals(userName))
+				continue;
+			if(!checkBeforeSend(toSend[i])){
+				JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				continue;
+			}
+			if(!clientTable.containsKey(toSend[i]) || !ipTable.get(toSend[i]).equals(clientTable.get(toSend[i]).getIp()))
+				clientTable.put(toSend[i], new Client(ipTable.get(toSend[i])));
+			if(!clientTable.get(toSend[i]).sendAudio(wavFile, currentFriend)){
+				JOptionPane.showMessageDialog(this, toSend[i] + "发送失败", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				continue;
+			}
 		}
-		Message message = new Message(currentFriend, true, Tools.getCurentTime(), MessageType.Audio, wavFile.getName());
+		Message message = new Message(userName, currentFriend, Tools.getCurentTime(), MessageType.Audio, wavFile.getName());
 		messageModelList.get(currentFriend).addElement(new MessagePanel(message));
 		messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
 		dbManager.addMessageItem(message);	
+		this.repaint();
 	}
 	
-	private boolean checkBeforeSend(){
-		if(!ipTable.containsKey(currentFriend) || ipTable.get(currentFriend).equals(new String(""))) {
-			JOptionPane.showMessageDialog(this, "该好友不在线，无法发送消息", "Waring", 
-					JOptionPane.WARNING_MESSAGE);
+	public boolean sendAddGroupMsg(ArrayList<String> groupList){
+		if(!checkBeforeAddGroup(groupList))
 			return false;
+		String groupStr = userName;
+		for(int i = 0; i < groupList.size(); ++i){
+			groupStr += ",";
+			groupStr += groupList.get(i);
+		}
+		for(int i = 0; i < groupList.size(); ++i){
+			if(!clientTable.containsKey(groupList.get(i)) || !ipTable.get(groupList.get(i)).equals(clientTable.get(groupList.get(i)).getIp()))
+				clientTable.put(groupList.get(i), new Client(ipTable.get(groupList.get(i))));
+			if(!clientTable.get(groupList.get(i)).sendGroupMsg(groupStr)){
+				JOptionPane.showMessageDialog(this, groupList.get(i) + "发送失败，请检查好友在线状态", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				return false;
+			}
+		}
+		if(!friendList.contains(groupStr)){
+			contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(groupStr, false)));
+			messageModelList.put(groupStr, new DefaultListModel<MessagePanel>());
+			dbManager.addContactsItem(groupStr);
+			friendList.add(groupStr);
+		}
+		return true;
+	}
+	
+	private boolean checkBeforeSend(String id){
+		if(!ipTable.containsKey(id) || ipTable.get(id).equals(new String("")))
+			return false;
+		return true;
+	}
+	
+	private boolean checkBeforeAddGroup(ArrayList<String> groupId){
+		for(int i = 0; i < groupId.size(); ++i){
+			if(!ipTable.containsKey(groupId.get(i)) || ipTable.get(groupId.get(i)).equals(new String(""))) {
+				JOptionPane.showMessageDialog(this, "好友" + groupId.get(i) + "不在线，无法建群", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				return false;
+			}
+		}
+		String[] groupArray = (String[]) groupId.toArray(new String[groupId.size() + 1]);
+		groupArray[groupArray.length - 1] = userName;
+		Arrays.sort(groupArray);
+		Iterator<String> it = friendList.iterator();
+		while(it.hasNext()){
+			String temp = it.next();
+			String[] tempArray = temp.split(",");
+			if(tempArray.length != groupArray.length)
+				continue;
+			Arrays.sort(tempArray);
+			if(Arrays.equals(groupArray, tempArray)){
+				JOptionPane.showMessageDialog(this, "该群聊已存在", "Waring", 
+						JOptionPane.WARNING_MESSAGE);
+				return false;
+			}
 		}
 		return true;
 	}
 	
 	private void addFriend(){
-		System.out.println("add friend");
 		String friendStr = textNewFriend.getText();
 		if(friendStr.length() != 10){
 			JOptionPane.showMessageDialog(this, "请输入好友学号", "Waring", 
@@ -463,27 +548,49 @@ public class MainFrame extends JFrame{
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
-		if(isResponsed == true)
-			csClient.checkOnline(friendStr);
+		System.out.println(isResponsed);
+		System.out.println(idToBeCheck.size());
+		idToBeCheck.put(friendStr, true);
+		csClient.checkOnline(idToBeCheck.keySet().iterator().next());
 		isResponsed = false;
 		textNewFriend.setText("");
 	}
 	
 	private void refresh(){
-		System.out.println("refresh");
 		updateOnline();
 	}
 	
 	private void addGroup(){
-		System.out.println("add group");
+		updateOnline();
+		ArrayList<String> list = new ArrayList<String>();
+		Iterator<String> it = friendList.iterator();
+		while(it.hasNext()){
+			String temp = it.next();
+			if(!temp.contains(","))
+				list.add(temp);
+		}
+		AddGroupDialog dlg = new AddGroupDialog(this, list);
+		dlg.setVisible(true);
 	}
 	
 	private void deleteFriend(){
-		System.out.println("delete friend");
-	}
-	
-	private void clearHistory(){
-		System.out.println("clear history");
+		Enumeration<ContactLabel> enu = contactModel.elements();
+		while (enu.hasMoreElements()) {
+			ContactLabel label = enu.nextElement();
+			if(label.getId().equals(currentFriend)){
+				contactModel.removeElement(label);
+				break;
+			}
+	    }
+		friendList.remove(currentFriend);
+		dbManager.deleteFriend(currentFriend);
+		messageModelList.remove(currentFriend);
+		if(contactModel.size() > 0)
+			setCurrnetFriend(contactModel.get(0).getId());
+		else {
+			currentFriend = "";
+			lblCurrentChat.setText(currentFriend);
+		}
 	}
 	
 	private void shutDown(){
@@ -499,6 +606,13 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void contactItemClicked(ContactLabel contactLabel){
+		if(isResponsed == true){
+			if(!contactLabel.isGroup()){
+				idToBeCheck.put(contactLabel.getId(), true);
+				csClient.checkOnline(idToBeCheck.keySet().iterator().next());
+				isResponsed = false;
+			}
+		}
 		contactLabel.handelClick();
 		this.repaint();
 		String id = contactLabel.getId();
@@ -514,19 +628,31 @@ public class MainFrame extends JFrame{
     	lblCurrentChat.setText(currentFriend);
     	messageList.setModel(messageModelList.get(id));
     	messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
+    	this.repaint();
 	}
 	
 	public void recieveMsg(Message msg){
-		String id = msg.friendId;
+		String[] tempArray = msg.sender.split(",");
+		for(int i = 0; i < tempArray.length; ++i){
+			idToBeCheck.put(tempArray[i], tempArray.length == 1);
+		}
+		csClient.checkOnline(idToBeCheck.keySet().iterator().next());
+		String id = msg.sender;
+		if(!msg.reciever.equals(userName))
+			id = msg.reciever;
+		System.out.println(id);
+		if(!friendList.contains(id))
+			friendList.add(id);
 		if(!messageModelList.containsKey(id)){
 			messageModelList.put(id, new DefaultListModel<MessagePanel>());
-			this.contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(id, true)));
+			contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(id, true)));
 			dbManager.addContactsItem(id);
 		}
 		dbManager.addMessageItem(msg);
 		messageModelList.get(id).addElement(new MessagePanel(msg));
 		if(currentFriend.equals(id)){
 			messageList.ensureIndexIsVisible(messageList.getModel().getSize() - 1);
+			this.repaint();
 		}
 		else{
 			Enumeration<ContactLabel> enu = contactModel.elements();
@@ -541,12 +667,19 @@ public class MainFrame extends JFrame{
 		}
 	}
 	
+	public void recieveGroupMsg(String groupStr){
+		contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(groupStr, true)));
+		messageModelList.put(groupStr, new DefaultListModel<MessagePanel>());
+		dbManager.addContactsItem(groupStr);
+		friendList.add(groupStr);
+	}
+	
 	public void recieveOnlineResponse(String id, String ip){
 		ipTable.put(id, ip);
 		boolean isOnline = true;
 		if(ip.equals(new String("")))
 			isOnline = false;
-		if(!friendList.contains(id)){
+		if(!friendList.contains(id) && idToBeCheck.get(id)){
 			contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(id, isOnline)));
 			messageModelList.put(id, new DefaultListModel<MessagePanel>());
 			dbManager.addContactsItem(id);
@@ -563,12 +696,12 @@ public class MainFrame extends JFrame{
 				}		
 		    }
 		}
-		if(idToBeCheck.contains(id)){
+		if(idToBeCheck.containsKey(id)){
 			idToBeCheck.remove(id);
 		}
 		isResponsed = true;
 		if(idToBeCheck.size()>0){
-			csClient.checkOnline(idToBeCheck.get(0));
+			csClient.checkOnline(idToBeCheck.keySet().iterator().next());
 			isResponsed = false;
 		}
 	}

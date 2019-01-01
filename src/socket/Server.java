@@ -99,16 +99,17 @@ public class Server {
 			}
 	    }
 	    public void run() {
-	    	String id = null;
+	    	String sender = null;
+	    	String reciever = null;
 	    	String type = null;
 			int length = 0;
 	    	while(true) {
 	    		try {
-	    			id = dis.readUTF();
+	    			sender = dis.readUTF();
+	    			reciever = dis.readUTF();
 	    			type = dis.readUTF();
 	    			length = dis.readInt();
-	    			System.out.println("type"+type);
-	    			Message message = new Message(id, false, Tools.getCurentTime(), MessageType.Text, null);
+	    			Message message = new Message(sender, reciever, Tools.getCurentTime(), MessageType.Text, null);
 					if(type.equals(Config.TextPrefix)){
 						String content = dis.readUTF();
 						message.type = MessageType.Text;
@@ -170,6 +171,12 @@ public class Server {
 				        output.close();
 						message.type = MessageType.Audio;
 						message.content = fileName;
+					}
+					else if(type.equals(Config.GroupPrefix)){
+						System.out.println("group**************");
+						String groupStr = dis.readUTF();		    
+						mf.recieveGroupMsg(groupStr);
+						continue;
 					}
 					mf.recieveMsg(message);
 				} catch (IOException e) {
