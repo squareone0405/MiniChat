@@ -138,6 +138,10 @@ public class AudioDialog extends JDialog {
 	}
 	
 	private void startRecord(){
+		if(wavFile != null){
+			wavFile.delete();
+		}
+		wavFile = null;
 		isRecording = true;
         btnRecord.setIcon(new ImageIcon(imageStop));
         new CaptureThread().start();

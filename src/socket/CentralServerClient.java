@@ -143,8 +143,8 @@ public class CentralServerClient {
 							mf.recieveOnlineResponse(idToCheck, str);
 					}
 				} catch (IOException e) {
-					JOptionPane.showMessageDialog(null, "连接断开", "Info",  
-							JOptionPane.INFORMATION_MESSAGE);
+					/*JOptionPane.showMessageDialog(null, "连接断开", "Info",  
+							JOptionPane.INFORMATION_MESSAGE);*/
 					try {
 						reader.close();
 						return;

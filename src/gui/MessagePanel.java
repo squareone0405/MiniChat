@@ -20,10 +20,12 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
+import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextPane;
 import javax.swing.text.ComponentView;
 import javax.swing.text.Element;
@@ -32,6 +34,7 @@ import javax.swing.text.LabelView;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.*;
 
 import util.*;
@@ -95,13 +98,13 @@ public class MessagePanel extends JPanel {
 		case Text:
 			textPane = new JTextPane();
 			textPane.setBounds(0, 20, 300, 20);
+			textPane.setFont(new Font("Î¢ÈíÑÅºÚ", Font.PLAIN, 17));
 			textPane.setEditorKit(new WrapEditorKit());
 			textPane.setText(msg.content);
 			textPane.setOpaque(true);
 			textPane.setEditable(false);
 			textPane.setFocusable(false);
 			textPane.setBackground(new Color(220, 220, 220));
-			textPane.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 15));
 			textPane.setLocation(0, 20);
 			textPane.setSize(300, 40);
 			textPane.setSize(300, textPane.getPreferredSize().height);

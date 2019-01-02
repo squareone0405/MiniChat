@@ -4,7 +4,6 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -108,7 +107,6 @@ public class Server {
 	    			sender = dis.readUTF();
 	    			reciever = dis.readUTF();
 	    			type = dis.readUTF();
-	    			length = dis.readInt();
 	    			Message message = new Message(sender, reciever, Tools.getCurentTime(), MessageType.Text, null);
 					if(type.equals(Config.TextPrefix)){
 						String content = dis.readUTF();
@@ -116,7 +114,7 @@ public class Server {
 						message.content = content;
 					}
 					else if(type.equals(Config.ImagePrefix)){
-						System.out.println("image**************");
+						length = dis.readInt();
 						String fileName = dis.readUTF();    
 						byte[] fileBuffer = new byte[length];
 						File dir = new File(Config.ChatFilePath);
@@ -135,7 +133,7 @@ public class Server {
 						message.content = fileName;
 					}
 					else if(type.equals(Config.FilePrefix)){
-						System.out.println("file**************");
+						length = dis.readInt();
 						String fileName = dis.readUTF();		    
 						byte[] fileBuffer = new byte[length];
 						File dir = new File(Config.ChatFilePath);
@@ -154,7 +152,7 @@ public class Server {
 						message.content = fileName;
 					}
 					else if(type.equals(Config.AudioPrefix)){
-						System.out.println("audio**************");
+						length = dis.readInt();
 						String fileName = dis.readUTF();		    
 						byte[] fileBuffer = new byte[length];
 						File dir = new File(Config.ChatFilePath);
@@ -173,7 +171,6 @@ public class Server {
 						message.content = fileName;
 					}
 					else if(type.equals(Config.GroupPrefix)){
-						System.out.println("group**************");
 						String groupStr = dis.readUTF();		    
 						mf.recieveGroupMsg(groupStr);
 						continue;

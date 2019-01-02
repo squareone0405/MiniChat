@@ -3,14 +3,8 @@ package socket;
 import java.io.*;
 
 import java.net.*;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 
 import javax.swing.JOptionPane;
-
-import gui.MainFrame;
 import util.*;
 
 public class Client {
@@ -55,7 +49,6 @@ public class Client {
 				dos.writeUTF(userName);
 				dos.writeUTF(reciever);
 				dos.writeUTF(Config.TextPrefix);
-				dos.writeInt(message.length());
 				dos.writeUTF(message);
 				dos.flush();
 			} catch (IOException e) {
@@ -173,7 +166,6 @@ public class Client {
 				dos.writeUTF(userName);
 				dos.writeUTF("@");
 				dos.writeUTF(Config.GroupPrefix);
-				dos.writeInt(0);
 				dos.writeUTF(groupStr);
 				dos.flush();
 			} catch (IOException e) {

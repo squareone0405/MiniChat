@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -369,6 +368,7 @@ public class MainFrame extends JFrame{
 			if(!clientTable.get(toSend[i]).sendMsg(content, currentFriend)){
 				JOptionPane.showMessageDialog(this, toSend[i] + "发送失败", "Waring", 
 						JOptionPane.WARNING_MESSAGE);
+				clientTable.remove(toSend[i]);
 				continue;
 			}
 		}
@@ -400,6 +400,7 @@ public class MainFrame extends JFrame{
 			if(!clientTable.get(toSend[i]).sendFile(file, currentFriend)){
 				JOptionPane.showMessageDialog(this, toSend[i] + "发送失败", "Waring", 
 						JOptionPane.WARNING_MESSAGE);
+				clientTable.remove(toSend[i]);
 				continue;
 			}
 		}
@@ -434,6 +435,7 @@ public class MainFrame extends JFrame{
 			if(!clientTable.get(toSend[i]).sendImage(file, currentFriend)){
 				JOptionPane.showMessageDialog(this, toSend[i] + "发送失败", "Waring", 
 						JOptionPane.WARNING_MESSAGE);
+				clientTable.remove(toSend[i]);
 				continue;
 			}
 		}
@@ -467,6 +469,7 @@ public class MainFrame extends JFrame{
 			if(!clientTable.get(toSend[i]).sendAudio(wavFile, currentFriend)){
 				JOptionPane.showMessageDialog(this, toSend[i] + "发送失败", "Waring", 
 						JOptionPane.WARNING_MESSAGE);
+				clientTable.remove(toSend[i]);
 				continue;
 			}
 		}
@@ -491,6 +494,7 @@ public class MainFrame extends JFrame{
 			if(!clientTable.get(groupList.get(i)).sendGroupMsg(groupStr)){
 				JOptionPane.showMessageDialog(this, groupList.get(i) + "发送失败，请检查好友在线状态", "Waring", 
 						JOptionPane.WARNING_MESSAGE);
+				clientTable.remove(groupList.get(i));
 				return false;
 			}
 		}
@@ -606,6 +610,10 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void contactItemClicked(ContactLabel contactLabel){
+		contactLabel.handelClick();
+		this.repaint();
+		String id = contactLabel.getId();
+		setCurrnetFriend(id);
 		if(isResponsed == true){
 			if(!contactLabel.isGroup()){
 				idToBeCheck.put(contactLabel.getId(), true);
@@ -613,10 +621,6 @@ public class MainFrame extends JFrame{
 				isResponsed = false;
 			}
 		}
-		contactLabel.handelClick();
-		this.repaint();
-		String id = contactLabel.getId();
-		setCurrnetFriend(id);
 	}
 	
 	private void messageItemClicked(MessagePanel msgPanel){

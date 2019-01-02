@@ -4,8 +4,6 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import javafx.util.Pair;
-
 public class ContactRenderer extends JLabel implements ListCellRenderer<Object> {
 	
 	@Override

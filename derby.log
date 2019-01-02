@@ -1,8 +1,8 @@
 ----------------------------------------------------------------
-Wed Jan 02 12:41:21 CST 2019:
-ÕıÔÚÊ¹ÓÃÀà¼ÓÔØ³ÌĞò sun.misc.Launcher$AppClassLoader@73d16e93 Òıµ¼Êı¾İ¿â
-Ä¿Â¼ F:\WorkSpace\Java\MiniChat\2016011503 ÖĞµÄ Derby °æ±¾ The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579) ÊµÀı a816c00e-0168-0cdd-ae51-000009854078
-ÒÑ´Ó file:/D:/Developer/sql_java/db-derby-10.14.2.0-bin/lib/derby.jar ¼ÓÔØ
+Wed Jan 02 20:48:46 CST 2019:
+æ­£åœ¨ä½¿ç”¨ç±»åŠ è½½ç¨‹åº sun.misc.Launcher$AppClassLoader@73d16e93 å¼•å¯¼æ•°æ®åº“
+ç›®å½• F:\WorkSpace\Java\MiniChat\2016011503 ä¸­çš„ Derby ç‰ˆæœ¬ The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579) å®ä¾‹ a816c00e-0168-0e9b-ebe9-00000971b098
+å·²ä» file:/D:/Developer/sql_java/db-derby-10.14.2.0-bin/lib/derby.jar åŠ è½½
 java.vendor=Oracle Corporation
 java.runtime.version=1.8.0_131-b11
 user.dir=F:\WorkSpace\Java\MiniChat
@@ -10,10 +10,10 @@ os.name=Windows 10
 os.arch=amd64
 os.version=10.0
 derby.system.home=null
-Êı¾İ¿âÀà¼ÓÔØ³ÌĞòÒÑÆô¶¯ - derby.database.classpath=''
+æ•°æ®åº“ç±»åŠ è½½ç¨‹åºå·²å¯åŠ¨ - derby.database.classpath=''
 ----------------------------------------------------------------
-Wed Jan 02 12:41:32 CST 2019£ºÕıÔÚ¹Ø±Õ Derby ÒıÇæ
+Wed Jan 02 20:49:21 CST 2019ï¼šæ­£åœ¨å…³é—­ Derby å¼•æ“
 ----------------------------------------------------------------
-Wed Jan 02 12:41:32 CST 2019:
-ÕıÔÚÊ¹ÓÃÀà¼ÓÔØ³ÌĞò sun.misc.Launcher$AppClassLoader@73d16e93 ¹Ø±ÕÊı¾İ¿âÄ¿Â¼ F:\WorkSpace\Java\MiniChat\2016011503 ÉÏµÄÊµÀı a816c00e-0168-0cdd-ae51-000009854078
+Wed Jan 02 20:49:22 CST 2019:
+æ­£åœ¨ä½¿ç”¨ç±»åŠ è½½ç¨‹åº sun.misc.Launcher$AppClassLoader@73d16e93 å…³é—­æ•°æ®åº“ç›®å½• F:\WorkSpace\Java\MiniChat\2016011503 ä¸Šçš„å®ä¾‹ a816c00e-0168-0e9b-ebe9-00000971b098
 ----------------------------------------------------------------
