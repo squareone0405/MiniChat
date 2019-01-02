@@ -641,9 +641,8 @@ public class MainFrame extends JFrame{
 		if(!msg.reciever.equals(userName))
 			id = msg.reciever;
 		System.out.println(id);
-		if(!friendList.contains(id))
+		if(!friendList.contains(id)){
 			friendList.add(id);
-		if(!messageModelList.containsKey(id)){
 			messageModelList.put(id, new DefaultListModel<MessagePanel>());
 			contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(id, true)));
 			dbManager.addContactsItem(id);
@@ -668,10 +667,12 @@ public class MainFrame extends JFrame{
 	}
 	
 	public void recieveGroupMsg(String groupStr){
-		contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(groupStr, true)));
-		messageModelList.put(groupStr, new DefaultListModel<MessagePanel>());
-		dbManager.addContactsItem(groupStr);
-		friendList.add(groupStr);
+		if(!friendList.contains(groupStr)){
+			friendList.add(groupStr);
+			contactModel.addElement(new ContactLabel(new Pair<String, Boolean>(groupStr, true)));
+			messageModelList.put(groupStr, new DefaultListModel<MessagePanel>());
+			dbManager.addContactsItem(groupStr);
+		}	
 	}
 	
 	public void recieveOnlineResponse(String id, String ip){
