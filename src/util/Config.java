@@ -17,7 +17,6 @@ public class Config {
 	
 	public final static String TextPrefix = "txt@";
 	public final static String ImagePrefix = "img@";
-	public final static String EmojiPrefix = "emj@";
 	public final static String FilePrefix = "fil@";
 	public final static String AudioPrefix = "aud@";
 	public final static String GroupPrefix = "grp@";
