@@ -359,7 +359,11 @@ public class MainFrame extends JFrame{
 			if(toSend[i].equals(userName))
 				continue;
 			if(!checkBeforeSend(toSend[i])){
-				JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
+				if(toSend[i].equals(new String("")))
+					JOptionPane.showMessageDialog(this, "请选择好友", "Waring", 
+							JOptionPane.WARNING_MESSAGE);
+				else 
+					JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
 						JOptionPane.WARNING_MESSAGE);
 				continue;
 			}
@@ -391,7 +395,11 @@ public class MainFrame extends JFrame{
 			if(toSend[i].equals(userName))
 				continue;
 			if(!checkBeforeSend(toSend[i])){
-				JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
+				if(toSend[i].equals(new String("")))
+					JOptionPane.showMessageDialog(this, "请选择好友", "Waring", 
+							JOptionPane.WARNING_MESSAGE);
+				else 
+					JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
 						JOptionPane.WARNING_MESSAGE);
 				continue;
 			}
@@ -426,7 +434,11 @@ public class MainFrame extends JFrame{
 			if(toSend[i].equals(userName))
 				continue;
 			if(!checkBeforeSend(toSend[i])){
-				JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
+				if(toSend[i].equals(new String("")))
+					JOptionPane.showMessageDialog(this, "请选择好友", "Waring", 
+							JOptionPane.WARNING_MESSAGE);
+				else 
+					JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
 						JOptionPane.WARNING_MESSAGE);
 				continue;
 			}
@@ -460,7 +472,11 @@ public class MainFrame extends JFrame{
 			if(toSend[i].equals(userName))
 				continue;
 			if(!checkBeforeSend(toSend[i])){
-				JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
+				if(toSend[i].equals(new String("")))
+					JOptionPane.showMessageDialog(this, "请选择好友", "Waring", 
+							JOptionPane.WARNING_MESSAGE);
+				else 
+					JOptionPane.showMessageDialog(this, toSend[i] + "不在线", "Waring", 
 						JOptionPane.WARNING_MESSAGE);
 				continue;
 			}

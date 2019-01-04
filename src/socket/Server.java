@@ -35,7 +35,7 @@ public class Server {
 			serverThread = new ServerThread();
 			serverThread.start();
         } catch (BindException e) {
-            JOptionPane.showMessageDialog(null, "本地服务器端口号9876已被占用", "Error",
+            JOptionPane.showMessageDialog(null, "本地服务器端口号" + Config.LocalServerPort + "已被占用", "Error",
                     JOptionPane.ERROR_MESSAGE); 
         } catch (Exception e1) {  
             e1.printStackTrace(); 

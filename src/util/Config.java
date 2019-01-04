@@ -3,7 +3,7 @@ package util;
 public class Config {
 	public final static String CentralServerAddr = "166.111.140.14";
 	public final static int CentralServerPort = 8000;
-	public final static int LocalServerPort = 9876;
+	public final static int LocalServerPort = 12580;
 	
 	public final static String CorrectPassword = "net2018";
 	public final static String LoginSuffix = "_net2018";
